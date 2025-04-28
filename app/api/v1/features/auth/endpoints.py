@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordBearer, HTTPBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,27 +9,10 @@ from app.api.v1.features.auth.security import (
     hash_password, verify_password,
     create_access_token, create_refresh_token, decode_token
 )
+from app.api.v1.features.auth.dependencies import get_current_user
 from app.core.database import get_session
 
 router = APIRouter()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
-bearer_scheme = HTTPBearer()
-
-async def get_current_user(db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)) -> User:
-    payload = decode_token(token)
-    if not payload or "sub" not in payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-    async with db.begin():
-        query = select(User).where(User.email == payload["sub"])
-        result = await db.execute(query)
-        user = result.scalar_one_or_none()
-
-        if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-
-    return user
 
 
 @router.post("/register")
@@ -80,6 +63,7 @@ async def refresh(token_in: TokenRefresh, db: AsyncSession = Depends(get_session
     new_refresh_token = create_refresh_token(payload={"id": user.id})
 
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)
+
 
 @router.get("/me")
 async def me(current_user: User = Depends(get_current_user)):
