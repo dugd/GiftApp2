@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from sqlalchemy import Integer, String, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.dialects.postgresql import JSONB
 from app.models.base import Base
 
@@ -16,5 +16,5 @@ class Recipient(Base):
     name: Mapped[str] = mapped_column(String(32), nullable=False)
     birthday: Mapped[date] = mapped_column(Date, nullable=True)
     relation: Mapped[str] = mapped_column(String(32), nullable=True)
-    preferences: Mapped[Optional[List[str]]] = mapped_column(MutableDict.as_mutable(JSONB), nullable=True)
+    preferences: Mapped[Optional[List[str]]] = mapped_column(MutableList.as_mutable(JSONB), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
