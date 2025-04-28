@@ -8,7 +8,7 @@ class RecipientBase(BaseModel):
     name: str = Field(min_length=2, max_length=32)
     birthday: date
     relation: str = Field(min_length=2, max_length=32)
-    preferences: Optional[List[str]] = Field(default=None)
+    preferences: Optional[List[str]] = Field(default=None, min_length=1, max_length=10)
     notes: Optional[str] = None
 
     @classmethod
@@ -17,8 +17,9 @@ class RecipientBase(BaseModel):
         today = date.today()
         if v >= today:
             raise ValueError("Birthday must be in the past")
-        if v < date(1900, 1, 1):
-            raise ValueError("Birthday is too far in the past (more than 1900)")
+        max_past = date(1900, 1, 1)
+        if v < max_past:
+            raise ValueError(f"Birthday is too far in the past (more than {max_past.year})")
         return v
 
 
@@ -35,7 +36,7 @@ class RecipientRead(RecipientBase):
 class RecipientUpdateInfo(BaseModel):
     name: Optional[str] = Field(default=None, min_length=2, max_length=32)
     relation: Optional[str] = Field(default=None, min_length=2, max_length=32)
-    preferences: Optional[List[str]] = Field(default=None)
+    preferences: Optional[List[str]] = Field(default=None, min_length=1, max_length=10)
     notes: Optional[str] = None
 
 
@@ -48,6 +49,7 @@ class RecipientUpdateBirthday(BaseModel):
         today = date.today()
         if v >= today:
             raise ValueError("Birthday must be in the past")
-        if v < date(1900, 1, 1):
-            raise ValueError("Birthday is too far in the past (more than 1900)")
+        max_past = date(1900, 1, 1)
+        if v < max_past:
+            raise ValueError(f"Birthday is too far in the past (more than {max_past.year})")
         return v
