@@ -33,20 +33,22 @@ async def get_current_user(db: AsyncSession = Depends(get_session), token: str =
 
 
 @router.post("/register")
-async def register(user_data: UserRegister = Depends(), session: AsyncSession = Depends(get_session())):
-    async with session.begin():
+async def register(user_data: UserRegister, db: AsyncSession = Depends(get_session)):
+    async with db.begin():
         query = select(User).where(User.email == user_data.email)
-        result = await session.execute(query)
+        result = await db.execute(query)
         existing_user = result.scalar_one_or_none()
         if existing_user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
         user = User(email=str(user_data.email), hashed_password=hash_password(user_data.password))
+        await db.commit()
+        await db.refresh(user)
 
     return UserRead.model_validate(user)
 
 
 @router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session())):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
     async with db.begin():
         query = select(User).where(User.email == form_data.username)
         result = await db.execute(query)
@@ -70,6 +72,9 @@ async def refresh(token_in: TokenRefresh, db: AsyncSession = Depends(get_session
         query = select(User).where(User.id == payload["id"])
         result = await db.execute(query)
         user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     new_access_token = create_access_token(payload={"id": user.id, "sub": user.email, "role": user.role})
     new_refresh_token = create_refresh_token(payload={"id": user.id})
