@@ -1,15 +1,14 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 from app.api.v1.features.auth.models import UserRole
 
 
 class UserRegister(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8, max_length=64)
 
 class UserBase(BaseModel):
     email: EmailStr
-    password: str
     role: UserRole
 
 class UserRead(UserBase):
