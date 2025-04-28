@@ -8,4 +8,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "My App"
     DEBUG: bool = False
 
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+
 settings = Settings()
