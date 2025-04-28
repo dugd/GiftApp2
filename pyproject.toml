@@ -1,0 +1,29 @@
+[project]
+name = "giftapp2"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Dugd_Nitkin",email = "dugd.nitkin@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+fastapi = "^0.115.12"
+uvicorn = "^0.34.2"
+sqlalchemy = "^2.0.40"
+pydantic = "^2.11.3"
+pydantic-settings = "^2.9.1"
+alembic = "^1.15.2"
+asyncpg = "^0.30.0"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^6.0.1"
+black = "^25.1.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
