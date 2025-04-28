@@ -15,7 +15,7 @@ from app.core.database import get_session
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register")
+@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserRegister, db: AsyncSession = Depends(get_session)):
     async with db.begin():
         query = select(User).where(User.email == user_data.email)
@@ -29,14 +29,13 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_sessi
     return UserRead.model_validate(user)
 
 
-@router.post("/login")
+@router.post("/login", response_model=TokenPair, status_code=status.HTTP_200_OK)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
-    async with db.begin():
-        query = select(User).where(User.email == form_data.username)
-        result = await db.execute(query)
-        user = result.scalar_one_or_none()
-        if not user or not verify_password(form_data.password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect credentials")
+    query = select(User).where(User.email == form_data.username)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect credentials")
 
     access_token = create_access_token(payload={"id": user.id, "sub": user.email, "role": user.role})
     refresh_token = create_refresh_token(payload={"id": user.id})
@@ -44,19 +43,18 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=TokenPair, status_code=status.HTTP_200_OK)
 async def refresh(token_in: TokenRefresh, db: AsyncSession = Depends(get_session)):
     payload = decode_token(token_in.refresh_token)
     if not payload or "id" not in payload:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-    async with db.begin():
-        query = select(User).where(User.id == payload["id"])
-        result = await db.execute(query)
-        user = result.scalar_one_or_none()
+    query = select(User).where(User.id == payload["id"])
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
 
-        if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     new_access_token = create_access_token(payload={"id": user.id, "sub": user.email, "role": user.role})
     new_refresh_token = create_refresh_token(payload={"id": user.id})
@@ -64,6 +62,6 @@ async def refresh(token_in: TokenRefresh, db: AsyncSession = Depends(get_session
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserRead, status_code=status.HTTP_200_OK)
 async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)

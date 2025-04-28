@@ -1,0 +1,111 @@
+from fastapi import APIRouter, status, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from app.api.v1.features.recipients.models import Recipient
+from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientRead, RecipientUpdateInfo, \
+    RecipientUpdateBirthday
+from app.core.database import get_session
+from app.api.v1.features.auth.models import User
+from app.api.v1.features.auth.dependencies import get_current_user
+
+router = APIRouter(prefix="/recipients", tags=["recipients"])
+
+
+@router.get("/", response_model=list[RecipientRead])
+async def index(
+        db: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
+):
+    """Get list of recipients"""
+    stmt = select(Recipient).where(Recipient.user_id == user.id)
+    result = await db.execute(stmt)
+    recipients = result.scalars().all()
+    return list(map(RecipientRead.model_validate, recipients))
+
+
+@router.get("/{recipient_id}", response_model=RecipientRead)
+async def get(
+        recipient_id: int,
+        db: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
+):
+    """Get recipient by ID"""
+    stmt = select(Recipient).where(Recipient.id == recipient_id, Recipient.user_id == user.id)
+    result = await db.execute(stmt)
+    recipient = result.scalar_one_or_none()
+    if not recipient:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipient not found")
+    return RecipientRead.model_validate(recipient)
+
+
+@router.post("/", response_model=RecipientRead, status_code=status.HTTP_201_CREATED)
+async def create(
+        data: RecipientCreate,
+        db: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
+):
+    """Create new recipient"""
+    async with db.begin():
+        recipient = Recipient(**data.model_dump(), user_id=user.id)
+        db.add(recipient)
+
+    return RecipientRead.model_validate(recipient)
+
+
+@router.patch("/{recipient_id}", response_model=RecipientRead, status_code=status.HTTP_202_ACCEPTED)
+async def update_info(
+        recipient_id: int,
+        data: RecipientUpdateInfo,
+        db: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
+):
+    """Update recipient info"""
+    async with db.begin():
+        stmt = select(Recipient).where(Recipient.id == recipient_id, Recipient.user_id == user.id)
+        result = await db.execute(stmt)
+        recipient = result.scalar_one_or_none()
+        if not recipient:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipient not found")
+
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(recipient, key, value)
+
+    return RecipientRead.model_validate(recipient)
+
+
+@router.post("/{recipient_id}/set-birthday", response_model=RecipientRead, status_code=status.HTTP_202_ACCEPTED)
+async def set_birthday(
+        recipient_id: int,
+        data: RecipientUpdateBirthday,
+        db: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
+):
+    """Set birthday for recipient"""
+    async with db.begin():
+        stmt = select(Recipient).where(Recipient.id == recipient_id, Recipient.user_id == user.id)
+        result = await db.execute(stmt)
+        recipient = result.scalar_one_or_none()
+        if not recipient:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipient not found")
+
+        recipient.birthday = data.birthday
+
+    return RecipientRead.model_validate(recipient)
+
+
+@router.delete("/{recipient_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete(
+        recipient_id: int,
+        db: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
+):
+    """Delete recipient"""
+    async with db.begin():
+        stmt = select(Recipient).where(Recipient.id == recipient_id, Recipient.user_id == user.id)
+        result = await db.execute(stmt)
+        recipient = result.scalar_one_or_none()
+        if not recipient:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipient not found")
+
+        await db.delete(recipient)
