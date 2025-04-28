@@ -12,7 +12,7 @@ from app.api.v1.features.auth.security import (
 from app.api.v1.features.auth.dependencies import get_current_user
 from app.core.database import get_session
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register")
