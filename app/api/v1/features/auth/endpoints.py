@@ -29,7 +29,7 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_sessi
     return UserRead.model_validate(user)
 
 
-@router.post("/login", response_model=TokenPair, status_code=status.HTTP_200_OK)
+@router.post("/login", response_model=TokenPair)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_session)):
     query = select(User).where(User.email == form_data.username)
     result = await db.execute(query)
@@ -44,7 +44,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)
 
 
-@router.post("/refresh", response_model=TokenPair, status_code=status.HTTP_200_OK)
+@router.post("/refresh", response_model=TokenPair)
 async def refresh(token_payload: dict = Depends(refresh_token_scheme), db: AsyncSession = Depends(get_session)):
     if not token_payload or "id" not in token_payload:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
@@ -63,6 +63,6 @@ async def refresh(token_payload: dict = Depends(refresh_token_scheme), db: Async
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)
 
 
-@router.get("/me", response_model=UserRead, status_code=status.HTTP_200_OK)
+@router.get("/me", response_model=UserRead)
 async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)
