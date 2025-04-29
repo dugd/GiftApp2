@@ -51,12 +51,20 @@ access_token_scheme = AccessTokenBearer()
 refresh_token_scheme = RefreshTokenBearer()
 
 
+async def get_token_payload(
+    token_payload: dict = Depends(access_token_scheme),
+) -> dict:
+    if "id" not in token_payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+    return token_payload
+
+
 async def get_current_user(
         db: AsyncSession = Depends(get_session),
-        token_payload: dict = Depends(access_token_scheme)) -> User:
-    if "id" not in token_payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
+        token_payload: dict = Depends(get_token_payload)) -> User:
     async with db.begin():
         query = select(User).where(User.id == token_payload["id"])
         result = await db.execute(query)
@@ -69,7 +77,7 @@ async def get_current_user(
 
 
 class RoleChecker:
-    def __init__(self, allowed_roles: list[str]):
+    def __init__(self, *allowed_roles):
         self.allowed_roles = allowed_roles
 
     def __call__(self, user: User = Depends(get_current_user)) -> bool:
