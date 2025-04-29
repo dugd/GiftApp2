@@ -58,9 +58,9 @@ async def create(
         user: User = Depends(get_current_user),
 ):
     """Create new recipient"""
-    async with db.begin():
-        recipient = Recipient(**data.model_dump(), user_id=user.id)
-        db.add(recipient)
+    recipient = Recipient(**data.model_dump(), user_id=user.id)
+    db.add(recipient)
+    await db.commit()
 
     return RecipientRead.model_validate(recipient)
 
@@ -73,11 +73,12 @@ async def update_info(
         user: User = Depends(get_current_user),
 ):
     """Update recipient info"""
-    async with db.begin():
-        recipient = get_recipient_or_404(db, recipient_id, user)
+    recipient = get_recipient_or_404(db, recipient_id, user)
 
-        for key, value in data.model_dump(exclude_unset=True).items():
-            setattr(recipient, key, value)
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(recipient, key, value)
+
+    await db.commit()
 
     return RecipientRead.model_validate(recipient)
 
@@ -90,10 +91,11 @@ async def set_birthday(
         user: User = Depends(get_current_user),
 ):
     """Set birthday for recipient"""
-    async with db.begin():
-        recipient = get_recipient_or_404(db, recipient_id, user)
+    recipient = get_recipient_or_404(db, recipient_id, user)
 
-        recipient.birthday = data.birthday
+    recipient.birthday = data.birthday
+
+    await db.commit()
 
     return RecipientRead.model_validate(recipient)
 
@@ -105,7 +107,8 @@ async def delete(
         user: User = Depends(get_current_user),
 ):
     """Delete recipient"""
-    async with db.begin():
-        recipient = get_recipient_or_404(db, recipient_id, user)
+    recipient = get_recipient_or_404(db, recipient_id, user)
 
-        await db.delete(recipient)
+    await db.delete(recipient)
+
+    await db.commit()
