@@ -1,15 +1,9 @@
 from typing import Optional, List
 from datetime import datetime, date
-from enum import Enum
 
 from pydantic import BaseModel, Field
 
-
-class EventType(Enum):
-    BIRTHDAY = "BIRTHDAY"
-    ANNIVERSARY = "ANNIVERSARY"
-    HOLIDAY = "HOLIDAY"
-    OTHER = "OTHER"
+from app.api.v1.features.events.models import EventType
 
 
 class EventBase(BaseModel):
@@ -18,7 +12,6 @@ class EventBase(BaseModel):
     is_repeating: bool
     type: EventType
     start_date: date
-    created_at: datetime
 
     recipient_id: Optional[int] = None
 
@@ -35,6 +28,7 @@ class EventModel(EventBase):
 
 class EventFull(EventModel):
     next_date: date = Field(alias="occurrence_date")
+    created_at: datetime
 
 
 class EventUpdate(BaseModel):
