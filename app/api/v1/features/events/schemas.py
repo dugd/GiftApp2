@@ -1,7 +1,7 @@
 from typing import Optional, List
 from datetime import datetime, date
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 
 from app.api.v1.features.events.models import EventType
 
@@ -23,28 +23,30 @@ class EventCreate(EventBase):
 class EventModel(EventBase):
     id: int
 
-    creator_id: Optional[int] = None
+    user_id: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EventOccurrenceId(BaseModel):
+    id: int
+    occurrence_date: date
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EventOccurrenceModel(EventOccurrenceId):
+    event_id: int
 
 
 class EventFull(EventModel):
-    next_date: date = Field(alias="occurrence_date")
-    created_at: datetime
+    next_occurrence: Optional[EventOccurrenceId]
 
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None
     type: Optional[str] = None
-
-
-class EventOccurrenceBase(BaseModel):
-    occurrence_date: date
-    created_at: datetime
-
-    event_id: int
-
-
-class EventOccurrenceModel(EventOccurrenceBase):
-    id: int
 
 
 class EventOccurrences(BaseModel):
