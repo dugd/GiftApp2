@@ -39,7 +39,7 @@ class Event(Base):
 
     # it is bad when set user_id before is_global
     @validates("user_id")
-    def not_null_if_global(self, key, value):
+    def not_null_if_local(self, key, value):
         if not self.is_global and value is None:
             raise ValueError(f"user_id is required for local events")
         return value
