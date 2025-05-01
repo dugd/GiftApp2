@@ -23,7 +23,7 @@ async def get_event_or_404(
         find_global: bool = True,
 ) -> Event:
     """Fetch an event by ID with user-specific access control, or raise 404."""
-    stmt = select(Event).where(Event.id == event_id)
+    stmt = select(Event).where(Event.id == event_id).where(Event.deleted_at == None)
     if isinstance(user, SimpleUser):
         stmt = stmt.where(
             or_(Event.user_id == user.id, Event.is_global)
@@ -44,7 +44,8 @@ async def index(
         db: AsyncSession = Depends(get_session),
 ):
     """Get all (global and user`s) next planned events"""
-    stmt = select(Event, EventOccurrence).join(EventOccurrence, Event.id == EventOccurrence.event_id)
+    stmt = (select(Event, EventOccurrence)
+            .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
 
@@ -68,7 +69,8 @@ async def index_occurrences(
         db: AsyncSession = Depends(get_session),
 ):
     """Get all event occurrences in date interval"""
-    stmt = select(Event, EventOccurrence).join(EventOccurrence, Event.id == EventOccurrence.event_id)
+    stmt = (select(Event, EventOccurrence)
+            .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
 
