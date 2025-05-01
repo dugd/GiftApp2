@@ -1,7 +1,7 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime, date
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, RootModel, ConfigDict
 
 from app.api.v1.features.events.models import EventType
 
@@ -49,6 +49,5 @@ class EventUpdate(BaseModel):
     type: Optional[EventType] = None
 
 
-class EventOccurrences(BaseModel):
-    id: int
-    occurrences: List[EventOccurrenceId] = []
+class EventOccurrences(RootModel):
+    root: Dict[int, List[EventOccurrenceId]] = {}

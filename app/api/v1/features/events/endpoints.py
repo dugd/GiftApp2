@@ -60,7 +60,7 @@ async def index(
     return response
 
 
-@router.get("/occurrences", response_model=list[EventOccurrences])
+@router.get("/occurrences", response_model=EventOccurrences)
 async def index_occurrences(
         from_date: date,
         to_date: date,
@@ -74,13 +74,13 @@ async def index_occurrences(
 
     result = await db.execute(stmt)
 
-    response = {}
+    response = EventOccurrences()
     for event, occurrence in result.all():
-        if event.id not in response: response[event.id] = EventOccurrences(id=event.id)
+        if event.id not in response: response.root[event.id] = []
 
-        response[event.id].occurrences.append(EventOccurrenceId.model_validate(occurrence))
+        response.root[event.id].append(EventOccurrenceId.model_validate(occurrence))
 
-    return response.values()
+    return response
 
 
 @router.post("/", response_model=EventModel, status_code=status.HTTP_201_CREATED)
