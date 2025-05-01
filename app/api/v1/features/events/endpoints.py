@@ -158,9 +158,17 @@ async def update_info(
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(
         event_id: int,
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_session),
 ):
     """delete event (set to inactive)"""
-    pass
+    event = await get_event_or_404(event_id, user, db, True)
+    if isinstance(user, SimpleUser):
+        if event.is_global:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to delete global event")
+
+    event.soft_delete()
+    await db.commit()
 
 
 @router.get(
