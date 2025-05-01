@@ -2,6 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 
 from sqlalchemy import Integer, String, Date, TIMESTAMP, ForeignKey, Boolean
+from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, validates
 from app.models.base import Base
 
@@ -23,8 +24,13 @@ class Event(Base):
     is_repeating: Mapped[bool] = mapped_column(Boolean, nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
 
+    deleted_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=True)
+
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     recipient_id: Mapped[int] = mapped_column(Integer, ForeignKey("recipients.id"), nullable=True)
+
+    def soft_delete(self):
+        self.deleted_at = func.now()
 
     @validates("type")
     def validate_type(self, key, value):

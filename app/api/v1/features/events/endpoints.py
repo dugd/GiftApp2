@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy import select
@@ -23,7 +23,7 @@ async def get_event_or_404(
         find_global: bool = True,
 ) -> Event:
     """Fetch an event by ID with user-specific access control, or raise 404."""
-    stmt = select(Event).where(Event.id == event_id)
+    stmt = select(Event).where(Event.id == event_id).where(Event.deleted_at == None)
     if isinstance(user, SimpleUser):
         stmt = stmt.where(
             or_(Event.user_id == user.id, Event.is_global)
@@ -44,7 +44,8 @@ async def index(
         db: AsyncSession = Depends(get_session),
 ):
     """Get all (global and user`s) next planned events"""
-    stmt = select(Event, EventOccurrence).join(EventOccurrence, Event.id == EventOccurrence.event_id)
+    stmt = (select(Event, EventOccurrence)
+            .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
 
@@ -60,7 +61,7 @@ async def index(
     return response
 
 
-@router.get("/occurrences", response_model=list[EventOccurrences])
+@router.get("/occurrences", response_model=EventOccurrences)
 async def index_occurrences(
         from_date: date,
         to_date: date,
@@ -68,26 +69,28 @@ async def index_occurrences(
         db: AsyncSession = Depends(get_session),
 ):
     """Get all event occurrences in date interval"""
-    stmt = select(Event, EventOccurrence).join(EventOccurrence, Event.id == EventOccurrence.event_id)
+    stmt = (select(Event, EventOccurrence)
+            .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
 
     result = await db.execute(stmt)
 
-    response = {}
+    response = EventOccurrences()
     for event, occurrence in result.all():
-        if event.id not in response: response[event.id] = EventOccurrences(id=event.id)
+        if event.id not in response: response.root[event.id] = []
 
-        response[event.id].occurrences.append(EventOccurrenceId.model_validate(occurrence))
+        response.root[event.id].append(EventOccurrenceId.model_validate(occurrence))
 
-    return response.values()
+    return response
 
 
 @router.post("/", response_model=EventModel, status_code=status.HTTP_201_CREATED)
 async def create(
         event_data: EventCreate,
         user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session)):
+        db: AsyncSession = Depends(get_session),
+):
     """Create new event"""
     if isinstance(user, SimpleUser):
         if event_data.is_global:
@@ -97,6 +100,10 @@ async def create(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="admin event must be global")
         if event_data.recipient_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="admin event must not have recipient")
+
+    now = datetime.now(timezone.utc)
+    if event_data.start_date < now:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event cannot be created in the past")
 
     event = Event(**event_data.model_dump(), user_id=user.id)
     db.add(event)
@@ -153,9 +160,17 @@ async def update_info(
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(
         event_id: int,
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_session),
 ):
     """delete event (set to inactive)"""
-    pass
+    event = await get_event_or_404(event_id, user, db, True)
+    if isinstance(user, SimpleUser):
+        if event.is_global:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to delete global event")
+
+    event.soft_delete()
+    await db.commit()
 
 
 @router.get(
