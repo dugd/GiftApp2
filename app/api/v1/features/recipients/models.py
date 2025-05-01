@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.api.v1.features.auth.models import User
+    from app.api.v1.features.auth.models import SimpleUser
 
 
 class Recipient(Base):
@@ -22,7 +22,7 @@ class Recipient(Base):
     preferences: Mapped[Optional[List[str]]] = mapped_column(MutableList.as_mutable(JSONB), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
-    user: Mapped["User"] = relationship(
-        "User",
+    user: Mapped["SimpleUser"] = relationship(
+        "SimpleUser",
         back_populates="recipients",
     )

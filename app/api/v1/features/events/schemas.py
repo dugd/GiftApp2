@@ -41,7 +41,7 @@ class EventOccurrenceModel(EventOccurrenceId):
 
 
 class EventFull(EventModel):
-    next_occurrence: Optional[EventOccurrenceId]
+    next_occurrence: Optional[EventOccurrenceId] = None
 
 
 class EventUpdate(BaseModel):

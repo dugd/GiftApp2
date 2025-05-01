@@ -53,7 +53,7 @@ async def index(
     # does not work with several occurrences per event
     response = []
     for event, occurrence in result.all():
-        event_full = EventFull(**EventModel.model_validate(event).model_dump())
+        event_full = EventFull.model_validate(event)
         event_full.next_occurrence = EventOccurrenceId.model_validate(occurrence)
         response.append(event_full)
 
@@ -89,7 +89,7 @@ async def create(
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session)):
     """Create new event"""
-    if isinstance(user, AdminUser):
+    if isinstance(user, SimpleUser):
         if event_data.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to create global event")
     if isinstance(user, AdminUser):
@@ -111,7 +111,7 @@ async def create(
 
     await db.commit()
 
-    return EventModel.model_validate(Event)
+    return EventModel.model_validate(event)
 
 
 @router.get("/{event_id}", response_model=EventFull)
@@ -140,7 +140,7 @@ async def update_info(
         db: AsyncSession = Depends(get_session),
 ):
     """update title, type fields"""
-    event = get_event_or_404(event_id, user, db, find_global=False)
+    event = await get_event_or_404(event_id, user, db, find_global=False)
 
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(event, key, value)
