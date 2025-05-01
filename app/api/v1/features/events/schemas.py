@@ -51,4 +51,4 @@ class EventUpdate(BaseModel):
 
 class EventOccurrences(BaseModel):
     id: int
-    occurrences: Optional[List[EventOccurrenceModel]] = None
+    occurrences: List[EventOccurrenceId] = []
