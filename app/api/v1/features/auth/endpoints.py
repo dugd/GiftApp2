@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.features.auth.models import User
+from app.api.v1.features.auth.models import User, SimpleUser
 from app.api.v1.features.auth.schemas import UserRegister, UserRead, TokenPair
 from app.api.v1.features.auth.security import (
     hash_password, verify_password,
@@ -22,7 +22,10 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_sessi
     existing_user = result.scalar_one_or_none()
     if existing_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-    user = User(email=str(user_data.email), hashed_password=hash_password(user_data.password))
+    user = SimpleUser(
+        email=str(user_data.email),
+        hashed_password=hash_password(user_data.password),
+    )
     db.add(user)
     await db.commit()
 
