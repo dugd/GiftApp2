@@ -46,7 +46,7 @@ class EventFull(EventModel):
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None
-    type: Optional[str] = None
+    type: Optional[EventType] = None
 
 
 class EventOccurrences(BaseModel):
