@@ -23,6 +23,8 @@ class Event(Base):
     is_repeating: Mapped[bool] = mapped_column(Boolean, nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
 
+    deleted_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=True)
+
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     recipient_id: Mapped[int] = mapped_column(Integer, ForeignKey("recipients.id"), nullable=True)
 
