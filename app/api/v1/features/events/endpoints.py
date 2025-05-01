@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy import select
@@ -87,7 +87,8 @@ async def index_occurrences(
 async def create(
         event_data: EventCreate,
         user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session)):
+        db: AsyncSession = Depends(get_session),
+):
     """Create new event"""
     if isinstance(user, SimpleUser):
         if event_data.is_global:
@@ -97,6 +98,10 @@ async def create(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="admin event must be global")
         if event_data.recipient_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="admin event must not have recipient")
+
+    now = datetime.now(timezone.utc)
+    if event_data.start_date < now:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event cannot be created in the past")
 
     event = Event(**event_data.model_dump(), user_id=user.id)
     db.add(event)
