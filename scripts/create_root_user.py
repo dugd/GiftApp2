@@ -35,12 +35,10 @@ async def create_root(root_email: str, root_password: str):
 def main():
     import asyncio
 
-    arg_email, arg_password = sys.argv[1:3]
+    arg_email = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_ROOT_EMAIL
+    arg_password = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_ROOT_PASSWORD
 
-    root_email = arg_email or DEFAULT_ROOT_EMAIL
-    root_password = arg_password or DEFAULT_ROOT_PASSWORD
-
-    asyncio.run(create_root(root_email, root_password))
+    asyncio.run(create_root(arg_email, arg_password))
 
 
 if __name__ == "__main__":
