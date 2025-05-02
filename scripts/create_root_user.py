@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from sqlalchemy import select
 
 from app.core.database import async_session
-from app.api.v1.features.models import RootUser # noqa
+from app.api.v1.features.models import RootUser
 from app.api.v1.features.auth.security import hash_password
 
 
