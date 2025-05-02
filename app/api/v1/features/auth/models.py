@@ -9,7 +9,7 @@ from app.models.base import Base
 
 
 if TYPE_CHECKING:
-    from app.api.v1.features.recipients.models import Recipient
+    from app.api.v1.features.models import Recipient
 
 
 class UserRole(Enum):

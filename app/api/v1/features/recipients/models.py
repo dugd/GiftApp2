@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.api.v1.features.auth.models import SimpleUser
+    from app.api.v1.features.models import SimpleUser
 
 
 class Recipient(Base):
