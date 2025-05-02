@@ -138,7 +138,7 @@ async def create(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="admin event must not have recipient")
 
     now = datetime.now(timezone.utc)
-    if event_data.start_date < now:
+    if event_data.start_date < now.date():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event cannot be created in the past")
 
     event = Event(**event_data.model_dump(), user_id=user.id)
@@ -148,7 +148,7 @@ async def create(
     event_occurrence = EventOccurrence(
         occurrence_date=event_data.start_date,
         event_id=event.id,
-        created_at=datetime.now(timezone.utc)
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None)
     )
     db.add(event_occurrence)
 
