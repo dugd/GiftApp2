@@ -53,5 +53,8 @@ class EventUpdate(BaseModel):
     type: Optional[EventType] = None
 
 
-class EventOccurrences(RootModel):
+class OccurrencesView(RootModel):
     root: Dict[int, List[EventOccurrenceId]] = {}
+
+class CalendarView(RootModel):
+    root: Dict[date, List[EventOccurrenceModel]] = {}

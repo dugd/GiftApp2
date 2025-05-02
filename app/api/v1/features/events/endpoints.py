@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.features.auth.dependencies import get_current_user
 from app.api.v1.features.auth.models import User, SimpleUser, AdminUser
 from app.api.v1.features.events.schemas import (
-    EventCreate, EventModel, EventFull, EventOccurrences, EventOccurrenceId, EventUpdate,
-    EventNext
+    EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
+    EventNext, CalendarView, EventOccurrenceModel
 )
 from app.api.v1.features.events.models import Event, EventOccurrence
 from app.core.database import get_session
@@ -61,7 +61,7 @@ async def index(
     return response.values()
 
 
-@router.get("/occurrences", response_model=EventOccurrences)
+@router.get("/occurrences", response_model=OccurrencesView)
 async def index_occurrences(
         from_date: date,
         to_date: date,
@@ -74,17 +74,49 @@ async def index_occurrences(
     format suitable for the expected response model.
     """
     stmt = (select(Event, EventOccurrence)
-            .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
+            .join(EventOccurrence, Event.id == EventOccurrence.event_id)
+            .where(Event.deleted_at == None)
+            .where(EventOccurrence.occurrence_date.between(from_date, to_date)))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
 
     result = await db.execute(stmt)
 
-    response = EventOccurrences()
+    response = OccurrencesView()
     for event, occurrence in result.all():
         if event.id not in response: response.root[event.id] = []
 
         response.root[event.id].append(EventOccurrenceId.model_validate(occurrence))
+
+    return response
+
+
+@router.get("/calendar", response_model=CalendarView)
+async def calendar_view(
+        from_date: date,
+        to_date: date,
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_session),
+):
+    """Return calendar-style view: occurrences grouped by date."""
+    stmt = (
+        select(Event, EventOccurrence)
+        .join(EventOccurrence, Event.id == EventOccurrence.event_id)
+        .where(Event.deleted_at == None)
+        .where(EventOccurrence.occurrence_date.between(from_date, to_date))
+    )
+
+    if isinstance(user, SimpleUser):
+        stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
+
+    result = await db.execute(stmt)
+
+    response = CalendarView()
+    for event, occurrence in result.all():
+        date_key = occurrence.occurrence_date
+        if date_key not in response.root:
+            response.root[date_key] = []
+        response.root[date_key].append(EventOccurrenceModel.model_validate(occurrence))
 
     return response
 
@@ -225,7 +257,9 @@ async def get_occurrences(
     """Get event occurrences in date interval"""
     event = await get_event_or_404(event_id, user, db, find_global=True)
 
-    stmt = select(EventOccurrence).where(EventOccurrence.event_id == event.id)
+    stmt = (select(EventOccurrence)
+            .where(EventOccurrence.event_id == event.id)
+            .where(EventOccurrence.occurrence_date.between(from_date, to_date)))
     result = await db.execute(stmt)
     event_occurrences = result.scalars().all()
 
