@@ -18,7 +18,14 @@ async def clean_tables():
         await db.commit()
         print("All tables truncated.")
 
+def confirm() -> bool:
+    answer = input("This will DELETE ALL DATA. Are you sure? (yes/no): ").strip().lower()
+    return answer in {"yes", "y"}
+
 def main():
+    if not confirm():
+        print("Aborted.")
+        return
     asyncio.run(clean_tables())
 
 if __name__ == "__main__":
