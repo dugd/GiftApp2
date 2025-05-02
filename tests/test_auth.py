@@ -59,24 +59,10 @@ async def test_refresh_token(async_client):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user(async_client):
-    # Регистрация и логин
-    await async_client.post("/api/v1/auth/register", json={
-        "email": "me@example.com",
-        "password": "mypassword",
-    })
-    login_resp = await async_client.post("/api/v1/auth/login", data={
-        "username": "me@example.com",
-        "password": "mypassword",
-    })
-
-    access_token = login_resp.json()["access_token"]
-
-    response = await async_client.get("/api/v1/auth/me", headers={
-        "Authorization": f"Bearer {access_token}"
-    })
+async def test_get_current_user(async_client, simple_user_token_headers):
+    response = await async_client.get("/api/v1/auth/me", headers=simple_user_token_headers)
 
     assert response.status_code == 200
     user = response.json()
-    assert user["email"] == "me@example.com"
+    assert user["email"] == "user@example.com"
     assert user["role"] == "USER"
