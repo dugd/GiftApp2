@@ -1,0 +1,2 @@
+class GiftAppError(Exception):
+    pass

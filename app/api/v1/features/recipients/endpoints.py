@@ -2,12 +2,12 @@ from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.database import get_session
+from app.api.v1.features.auth.dependencies import get_current_user, RoleChecker
 from app.api.v1.features.recipients.models import Recipient
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientRead, RecipientUpdateInfo, \
     RecipientUpdateBirthday
-from app.core.database import get_session
 from app.api.v1.features.auth.models import User, UserRole
-from app.api.v1.features.auth.dependencies import get_current_user, RoleChecker
 
 router = APIRouter(prefix="/recipients", tags=["recipients"])
 
