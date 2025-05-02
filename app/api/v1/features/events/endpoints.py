@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.features.auth.dependencies import get_current_user
 from app.api.v1.features.auth.models import User, SimpleUser, AdminUser
 from app.api.v1.features.events.schemas import (
-    EventCreate, EventModel, EventFull, EventOccurrenceModel, EventOccurrences, EventOccurrenceId, EventUpdate
+    EventCreate, EventModel, EventFull, EventOccurrences, EventOccurrenceId, EventUpdate,
+    EventNext
 )
 from app.api.v1.features.events.models import Event, EventOccurrence
 from app.core.database import get_session
@@ -51,14 +52,13 @@ async def index(
 
     result = await db.execute(stmt)
 
-    # does not work with several occurrences per event
-    response = []
+    response = {}
     for event, occurrence in result.all():
-        event_full = EventFull.model_validate(event)
-        event_full.next_occurrence = EventOccurrenceId.model_validate(occurrence)
-        response.append(event_full)
+        if event.id not in response:
+            response[event.id] = EventFull.model_validate(event)
+        response[event.id].occurrences.append(EventOccurrenceId.model_validate(occurrence))
 
-    return response
+    return response.values()
 
 
 @router.get("/occurrences", response_model=EventOccurrences)
@@ -68,7 +68,11 @@ async def index_occurrences(
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
 ):
-    """Get all event occurrences in date interval"""
+    """
+    Fetches and processes occurrences of events within a specified date range. This function queries the database for
+    events and their occurrences, processes them according to user type, and returns the data in a structured response
+    format suitable for the expected response model.
+    """
     stmt = (select(Event, EventOccurrence)
             .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
     if isinstance(user, SimpleUser):
@@ -112,7 +116,7 @@ async def create(
     event_occurrence = EventOccurrence(
         occurrence_date=event_data.start_date,
         event_id=event.id,
-        created_at=datetime.now()
+        created_at=datetime.now(timezone.utc)
     )
     db.add(event_occurrence)
 
@@ -122,7 +126,7 @@ async def create(
 
 
 @router.get("/{event_id}", response_model=EventFull)
-async def get(
+async def get_event(
         event_id: int,
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
@@ -132,12 +136,48 @@ async def get(
 
     stmt = select(EventOccurrence).where(EventOccurrence.event_id == event.id)
     result = await db.execute(stmt)
-    event_occurrence = result.scalar_one_or_none()
+    event_occurrences = result.scalars().all()
 
-    event_full = EventFull(**EventModel.model_validate(event).model_dump())
-    event_full.next_occurrence = EventOccurrenceId.model_validate(event_occurrence)
+    event_full = EventFull.model_validate(event)
+    for occurrence in event_occurrences:
+        event_full.occurrences.append(EventOccurrenceId.model_validate(occurrence))
+
+
     return event_full
 
+
+@router.get("/{event_id}/info", response_model=EventModel)
+async def get_info(
+        event_id: int,
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_session),
+):
+    """Get event info"""
+    event = await get_event_or_404(event_id, user, db, find_global=True)
+
+    return EventModel.model_validate(event)
+
+@router.get("/{event_id}/next", response_model=EventNext)
+async def get_next(
+        event_id: int,
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_session),
+):
+    """Get event with next occurrence"""
+    event = await get_event_or_404(event_id, user, db, find_global=True)
+
+    stmt = (select(EventOccurrence)
+            .where(EventOccurrence.event_id == event.id)
+            .where(EventOccurrence.occurrence_date >= date.today())
+            .order_by(EventOccurrence.occurrence_date.asc())
+            .limit(1))
+    result = await db.execute(stmt)
+    occurrence = result.scalar_one_or_none()
+
+    response = EventNext.model_validate(event)
+    if occurrence:
+        response.occurrence = EventOccurrenceId.model_validate(occurrence)
+    return response
 
 @router.patch("/{event_id}", response_model=EventModel, status_code=status.HTTP_202_ACCEPTED)
 async def update_info(
@@ -174,7 +214,7 @@ async def delete(
 
 
 @router.get(
-    "/{event_id}/occurrences", response_model=list[EventOccurrenceModel])
+    "/{event_id}/occurrences", response_model=list[EventOccurrenceId])
 async def get_occurrences(
         event_id: int,
         from_date: date,
@@ -189,4 +229,4 @@ async def get_occurrences(
     result = await db.execute(stmt)
     event_occurrences = result.scalars().all()
 
-    return list(map(EventOccurrenceModel.model_validate, event_occurrences))
+    return list(map(EventOccurrenceId.model_validate, event_occurrences))
