@@ -21,10 +21,11 @@ async def register_user(user_data: UserRegister, db: AsyncSession) -> User:
     return user
 
 
-async def authenticate_user(email: str, password: str, db: AsyncSession):
+async def authenticate_user(email: str, password: str, db: AsyncSession) -> User:
     user = await get_user_by_email(email, db)
-    if not user or verify_password(password, user.hashed_password):
+    if not user or not verify_password(password, user.hashed_password):
         raise WrongCredentials("Incorrect credentials")
+    return user
 
 
 def create_token_pair(user: User) -> TokenPair:

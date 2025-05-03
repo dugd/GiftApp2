@@ -52,7 +52,7 @@ async def create(
         user: User = Depends(get_current_user),
 ):
     """Create new recipient"""
-    recipient = recipient_create(data, user.id, db)
+    recipient = await recipient_create(data, user.id, db)
 
     return RecipientRead.model_validate(recipient)
 
