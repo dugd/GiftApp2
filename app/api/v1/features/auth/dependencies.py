@@ -2,11 +2,11 @@ from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from jose import JWTError, ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
+from app.core.database import get_session
 from app.api.v1.features.auth.models import User
 from app.api.v1.features.auth.security import decode_token
-from app.core.database import get_session
+from app.api.v1.features.auth.service import get_user_by_id
 
 
 class TokenBearer(HTTPBearer):
@@ -66,9 +66,7 @@ async def get_current_user(
         db: AsyncSession = Depends(get_session),
         token_payload: dict = Depends(get_token_payload)) -> User:
     async with db.begin():
-        query = select(User).where(User.id == token_payload["id"])
-        result = await db.execute(query)
-        user = result.scalar_one_or_none()
+        user = get_user_by_id(token_payload["id"])
 
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")

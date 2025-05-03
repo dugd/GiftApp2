@@ -1,16 +1,19 @@
-from datetime import date, datetime, timezone
+from datetime import date
 
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.sql import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.v1.features.exceptions import NotFoundError
 from app.api.v1.features.auth.dependencies import get_current_user
 from app.api.v1.features.auth.models import User, SimpleUser, AdminUser
+from app.api.v1.features.events.exceptions import PastEventError
 from app.api.v1.features.events.schemas import (
     EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
     EventNext, CalendarView, EventOccurrenceModel
 )
+from app.api.v1.features.events.service import event_create, event_update_info, event_delete, get_event
 from app.api.v1.features.events.models import Event, EventOccurrence
 from app.core.database import get_session
 
@@ -21,22 +24,14 @@ async def get_event_or_404(
         event_id: int,
         user: User,
         db: AsyncSession,
-        find_global: bool = True,
 ) -> Event:
     """Fetch an event by ID with user-specific access control, or raise 404."""
-    stmt = select(Event).where(Event.id == event_id).where(Event.deleted_at == None)
-    if isinstance(user, SimpleUser):
-        stmt = stmt.where(
-            or_(Event.user_id == user.id, Event.is_global)
-            if find_global else
-            (Event.user_id == user.id)
-        )
-    result = await db.execute(stmt)
-    event = result.scalar_one_or_none()
-    if event is None:
+    try:
+        event = await get_event(event_id, user, db)
+    except NotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
-    return event
 
+    return event
 
 
 @router.get("/", response_model=list[EventFull])
@@ -46,7 +41,8 @@ async def index(
 ):
     """Get all (global and user`s) next planned events"""
     stmt = (select(Event, EventOccurrence)
-            .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
+            .join(EventOccurrence, Event.id == EventOccurrence.event_id)
+            .where(Event.deleted_at == None))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
 
@@ -137,36 +133,25 @@ async def create(
         if event_data.recipient_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="admin event must not have recipient")
 
-    now = datetime.now(timezone.utc)
-    if event_data.start_date < now.date():
+    try:
+        response = await event_create(event_data, user.id, db)
+    except PastEventError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event cannot be created in the past")
 
-    event = Event(**event_data.model_dump(), user_id=user.id)
-    db.add(event)
-    await db.flush()
-
-    event_occurrence = EventOccurrence(
-        occurrence_date=event_data.start_date,
-        event_id=event.id,
-        created_at=datetime.now(timezone.utc).replace(tzinfo=None)
-    )
-    db.add(event_occurrence)
-
-    await db.commit()
-
-    return EventModel.model_validate(event)
+    return response
 
 
 @router.get("/{event_id}", response_model=EventFull)
-async def get_event(
+async def get(
         event_id: int,
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
 ):
     """Get event"""
-    event = await get_event_or_404(event_id, user, db, find_global=False)
+    event = await get_event_or_404(event_id, user, db)
 
-    stmt = select(EventOccurrence).where(EventOccurrence.event_id == event.id)
+    stmt = (select(EventOccurrence)
+            .where(EventOccurrence.event_id == event.id))
     result = await db.execute(stmt)
     event_occurrences = result.scalars().all()
 
@@ -185,7 +170,7 @@ async def get_info(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event info"""
-    event = await get_event_or_404(event_id, user, db, find_global=True)
+    event = await get_event_or_404(event_id, user, db)
 
     return EventModel.model_validate(event)
 
@@ -196,7 +181,7 @@ async def get_next(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event with next occurrence"""
-    event = await get_event_or_404(event_id, user, db, find_global=True)
+    event = await get_event_or_404(event_id, user, db)
 
     stmt = (select(EventOccurrence)
             .where(EventOccurrence.event_id == event.id)
@@ -219,14 +204,13 @@ async def update_info(
         db: AsyncSession = Depends(get_session),
 ):
     """update title, type fields"""
-    event = await get_event_or_404(event_id, user, db, find_global=False)
+    event = await get_event_or_404(event_id, user, db)
+    if isinstance(user, SimpleUser):
+        if event.is_global:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to change global event")
+    updated = await event_update_info(event, data, db)
 
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(event, key, value)
-
-    await db.commit()
-
-    return EventModel.model_validate(event)
+    return EventModel.model_validate(updated)
 
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -236,13 +220,12 @@ async def delete(
         db: AsyncSession = Depends(get_session),
 ):
     """delete event (set to inactive)"""
-    event = await get_event_or_404(event_id, user, db, True)
+    event = await get_event_or_404(event_id, user, db)
     if isinstance(user, SimpleUser):
         if event.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to delete global event")
 
-    event.soft_delete()
-    await db.commit()
+    await event_delete(event, db)
 
 
 @router.get(
@@ -255,7 +238,7 @@ async def get_occurrences(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event occurrences in date interval"""
-    event = await get_event_or_404(event_id, user, db, find_global=True)
+    event = await get_event_or_404(event_id, user, db)
 
     stmt = (select(EventOccurrence)
             .where(EventOccurrence.event_id == event.id)
