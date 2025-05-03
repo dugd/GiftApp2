@@ -22,7 +22,7 @@ class Recipient(Base):
     preferences: Mapped[Optional[List[str]]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
-    related_events: Mapped["Event"] = relationship(
+    related_events: Mapped[List["Event"]] = relationship(
         "Event",
         back_populates="related_recipient"
     )
