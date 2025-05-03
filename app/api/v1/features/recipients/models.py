@@ -8,7 +8,7 @@ from sqlalchemy.types import JSON
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.api.v1.features.models import SimpleUser
+    from app.api.v1.features.models import SimpleUser, Event
 
 
 class Recipient(Base):
@@ -22,6 +22,10 @@ class Recipient(Base):
     preferences: Mapped[Optional[List[str]]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
+    related_events: Mapped["Event"] = relationship(
+        "Event",
+        back_populates="related_recipient"
+    )
     user: Mapped["SimpleUser"] = relationship(
         "SimpleUser",
         back_populates="recipients",

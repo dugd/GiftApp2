@@ -1,11 +1,14 @@
+from typing import TYPE_CHECKING
 from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import Integer, String, Date, TIMESTAMP, ForeignKey, Boolean
+from sqlalchemy import Integer, String, Date, TIMESTAMP, ForeignKey, CheckConstraint, Boolean
 from sqlalchemy.sql import func
-from sqlalchemy.orm import Mapped, mapped_column, validates
+from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 from app.models.base import Base
 
+if TYPE_CHECKING:
+    from app.api.v1.features.models import User, Recipient
 
 class EventType(Enum):
     BIRTHDAY = "BIRTHDAY"
@@ -16,6 +19,12 @@ class EventType(Enum):
 
 class Event(Base):
     __tablename__ = "events"
+    __table_args__ = (
+        CheckConstraint(
+            "(NOT is_global) OR (recipient_id IS NULL)",
+            name="chk_global_recipient_null",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -28,6 +37,16 @@ class Event(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     recipient_id: Mapped[int] = mapped_column(Integer, ForeignKey("recipients.id"), nullable=True)
+
+
+    related_recipient: Mapped["Recipient"] = relationship(
+        "Recipient",
+        back_populates="related_events"
+    )
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="events",
+    )
 
     def soft_delete(self):
         self.deleted_at = func.now()
@@ -42,13 +61,6 @@ class Event(Base):
             return value
         else:
             raise TypeError(f"Type must be str or EventType, got {type(value)}")
-
-    # it is bad when set user_id before is_global
-    @validates("user_id")
-    def not_null_if_local(self, key, value):
-        if not self.is_global and value is None:
-            raise ValueError(f"user_id is required for local events")
-        return value
 
 
 class EventOccurrence(Base):

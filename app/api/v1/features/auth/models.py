@@ -9,7 +9,7 @@ from app.models.base import Base
 
 
 if TYPE_CHECKING:
-    from app.api.v1.features.models import Recipient
+    from app.api.v1.features.models import Recipient, Event
 
 
 class UserRole(Enum):
@@ -29,6 +29,11 @@ class User(Base):
     role: Mapped[str] = mapped_column(nullable=False, default=UserRole.USER.value)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    events: Mapped["Event"] = relationship(
+        "Event",
+        back_populates="user",
+    )
 
     @validates("role")
     def validate_role(self, key, value):
