@@ -24,7 +24,6 @@ async def get_event_or_404(
         event_id: int,
         user: User,
         db: AsyncSession,
-        find_global: bool = True,
 ) -> Event:
     """Fetch an event by ID with user-specific access control, or raise 404."""
     try:
@@ -42,7 +41,8 @@ async def index(
 ):
     """Get all (global and user`s) next planned events"""
     stmt = (select(Event, EventOccurrence)
-            .join(EventOccurrence, Event.id == EventOccurrence.event_id).where(Event.deleted_at == None))
+            .join(EventOccurrence, Event.id == EventOccurrence.event_id)
+            .where(Event.deleted_at == None))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
 
@@ -148,9 +148,10 @@ async def get(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event"""
-    event = await get_event_or_404(event_id, user, db, find_global=False)
+    event = await get_event_or_404(event_id, user, db)
 
-    stmt = select(EventOccurrence).where(EventOccurrence.event_id == event.id)
+    stmt = (select(EventOccurrence)
+            .where(EventOccurrence.event_id == event.id))
     result = await db.execute(stmt)
     event_occurrences = result.scalars().all()
 
@@ -169,7 +170,7 @@ async def get_info(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event info"""
-    event = await get_event_or_404(event_id, user, db, find_global=True)
+    event = await get_event_or_404(event_id, user, db)
 
     return EventModel.model_validate(event)
 
@@ -180,7 +181,7 @@ async def get_next(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event with next occurrence"""
-    event = await get_event_or_404(event_id, user, db, find_global=True)
+    event = await get_event_or_404(event_id, user, db)
 
     stmt = (select(EventOccurrence)
             .where(EventOccurrence.event_id == event.id)
@@ -203,7 +204,10 @@ async def update_info(
         db: AsyncSession = Depends(get_session),
 ):
     """update title, type fields"""
-    event = await get_event_or_404(event_id, user, db, find_global=False)
+    event = await get_event_or_404(event_id, user, db)
+    if isinstance(user, SimpleUser):
+        if event.is_global:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to change global event")
     updated = await event_update_info(event, data, db)
 
     return EventModel.model_validate(updated)
@@ -216,7 +220,7 @@ async def delete(
         db: AsyncSession = Depends(get_session),
 ):
     """delete event (set to inactive)"""
-    event = await get_event_or_404(event_id, user, db, True)
+    event = await get_event_or_404(event_id, user, db)
     if isinstance(user, SimpleUser):
         if event.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to delete global event")
@@ -234,7 +238,7 @@ async def get_occurrences(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event occurrences in date interval"""
-    event = await get_event_or_404(event_id, user, db, find_global=True)
+    event = await get_event_or_404(event_id, user, db)
 
     stmt = (select(EventOccurrence)
             .where(EventOccurrence.event_id == event.id)
