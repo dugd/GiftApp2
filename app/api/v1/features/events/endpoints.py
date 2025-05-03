@@ -1,8 +1,5 @@
 from datetime import date
-
 from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.sql import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.features.exceptions import NotFoundError
@@ -13,8 +10,9 @@ from app.api.v1.features.events.schemas import (
     EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
     EventNext, CalendarView, EventOccurrenceModel
 )
-from app.api.v1.features.events.service import event_create, event_update_info, event_delete, get_event
-from app.api.v1.features.events.models import Event, EventOccurrence
+from app.api.v1.features.events.service import event_create, event_update_info, event_delete, get_event, get_event_list, \
+    get_next_occurrence
+from app.api.v1.features.events.models import Event
 from app.core.database import get_session
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -24,10 +22,11 @@ async def get_event_or_404(
         event_id: int,
         user: User,
         db: AsyncSession,
+        with_occurrence: bool = False,
 ) -> Event:
     """Fetch an event by ID with user-specific access control, or raise 404."""
     try:
-        event = await get_event(event_id, user, db)
+        event = await get_event(event_id, user, db, with_occurrence=with_occurrence)
     except NotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
 
@@ -40,21 +39,13 @@ async def index(
         db: AsyncSession = Depends(get_session),
 ):
     """Get all (global and user`s) next planned events"""
-    stmt = (select(Event, EventOccurrence)
-            .join(EventOccurrence, Event.id == EventOccurrence.event_id)
-            .where(Event.deleted_at == None))
-    if isinstance(user, SimpleUser):
-        stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
+    events = await get_event_list(user, db, with_occurrence=True)
+    response = []
+    for event in events:
+        model = EventFull.model_validate(event)
+        response.append(model)
 
-    result = await db.execute(stmt)
-
-    response = {}
-    for event, occurrence in result.all():
-        if event.id not in response:
-            response[event.id] = EventFull.model_validate(event)
-        response[event.id].occurrences.append(EventOccurrenceId.model_validate(occurrence))
-
-    return response.values()
+    return response
 
 
 @router.get("/occurrences", response_model=OccurrencesView)
@@ -69,20 +60,11 @@ async def index_occurrences(
     events and their occurrences, processes them according to user type, and returns the data in a structured response
     format suitable for the expected response model.
     """
-    stmt = (select(Event, EventOccurrence)
-            .join(EventOccurrence, Event.id == EventOccurrence.event_id)
-            .where(Event.deleted_at == None)
-            .where(EventOccurrence.occurrence_date.between(from_date, to_date)))
-    if isinstance(user, SimpleUser):
-        stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
-
-    result = await db.execute(stmt)
+    events = await get_event_list(user, db, with_occurrence=True)
 
     response = OccurrencesView()
-    for event, occurrence in result.all():
-        if event.id not in response: response.root[event.id] = []
-
-        response.root[event.id].append(EventOccurrenceId.model_validate(occurrence))
+    for event in events:
+        response.root[event.id] = [EventOccurrenceId.model_validate(occur) for occur in event.occurrences]
 
     return response
 
@@ -95,24 +77,15 @@ async def calendar_view(
         db: AsyncSession = Depends(get_session),
 ):
     """Return calendar-style view: occurrences grouped by date."""
-    stmt = (
-        select(Event, EventOccurrence)
-        .join(EventOccurrence, Event.id == EventOccurrence.event_id)
-        .where(Event.deleted_at == None)
-        .where(EventOccurrence.occurrence_date.between(from_date, to_date))
-    )
-
-    if isinstance(user, SimpleUser):
-        stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
-
-    result = await db.execute(stmt)
+    events = await get_event_list(user, db, with_occurrence=True)
 
     response = CalendarView()
-    for event, occurrence in result.all():
-        date_key = occurrence.occurrence_date
-        if date_key not in response.root:
-            response.root[date_key] = []
-        response.root[date_key].append(EventOccurrenceModel.model_validate(occurrence))
+    for event in events:
+        for occur in event.occurrences:
+            date_key = occur.occurrence_date
+            if date_key not in response.root:
+                response.root[date_key] = []
+            response.root[date_key].append(EventOccurrenceModel.model_validate(occur))
 
     return response
 
@@ -148,17 +121,9 @@ async def get(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event"""
-    event = await get_event_or_404(event_id, user, db)
-
-    stmt = (select(EventOccurrence)
-            .where(EventOccurrence.event_id == event.id))
-    result = await db.execute(stmt)
-    event_occurrences = result.scalars().all()
+    event = await get_event_or_404(event_id, user, db, with_occurrence=True)
 
     event_full = EventFull.model_validate(event)
-    for occurrence in event_occurrences:
-        event_full.occurrences.append(EventOccurrenceId.model_validate(occurrence))
-
 
     return event_full
 
@@ -170,7 +135,7 @@ async def get_info(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event info"""
-    event = await get_event_or_404(event_id, user, db)
+    event = await get_event_or_404(event_id, user, db, with_occurrence=False)
 
     return EventModel.model_validate(event)
 
@@ -182,14 +147,7 @@ async def get_next(
 ):
     """Get event with next occurrence"""
     event = await get_event_or_404(event_id, user, db)
-
-    stmt = (select(EventOccurrence)
-            .where(EventOccurrence.event_id == event.id)
-            .where(EventOccurrence.occurrence_date >= date.today())
-            .order_by(EventOccurrence.occurrence_date.asc())
-            .limit(1))
-    result = await db.execute(stmt)
-    occurrence = result.scalar_one_or_none()
+    occurrence = await get_next_occurrence(event_id, db)
 
     response = EventNext.model_validate(event)
     if occurrence:
@@ -204,7 +162,7 @@ async def update_info(
         db: AsyncSession = Depends(get_session),
 ):
     """update title, type fields"""
-    event = await get_event_or_404(event_id, user, db)
+    event = await get_event_or_404(event_id, user, db, with_occurrence=False)
     if isinstance(user, SimpleUser):
         if event.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to change global event")
@@ -220,7 +178,7 @@ async def delete(
         db: AsyncSession = Depends(get_session),
 ):
     """delete event (set to inactive)"""
-    event = await get_event_or_404(event_id, user, db)
+    event = await get_event_or_404(event_id, user, db, with_occurrence=False)
     if isinstance(user, SimpleUser):
         if event.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to delete global event")
@@ -238,12 +196,8 @@ async def get_occurrences(
         db: AsyncSession = Depends(get_session),
 ):
     """Get event occurrences in date interval"""
-    event = await get_event_or_404(event_id, user, db)
+    event = await get_event_or_404(event_id, user, db, with_occurrence=True)
 
-    stmt = (select(EventOccurrence)
-            .where(EventOccurrence.event_id == event.id)
-            .where(EventOccurrence.occurrence_date.between(from_date, to_date)))
-    result = await db.execute(stmt)
-    event_occurrences = result.scalars().all()
+    response = [EventOccurrenceId.model_validate(occur) for occur in event.occurrences]
 
-    return list(map(EventOccurrenceId.model_validate, event_occurrences))
+    return response

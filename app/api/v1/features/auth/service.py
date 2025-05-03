@@ -36,7 +36,7 @@ def create_token_pair(user: User) -> TokenPair:
 
 
 async def get_user_by_id(_id: int, db: AsyncSession) -> User | None:
-    stmt = select(User).where(User.id == id)
+    stmt = select(User).where(User.id == _id)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 

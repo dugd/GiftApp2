@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from datetime import date, datetime
 from enum import Enum
 
@@ -43,6 +43,10 @@ class Event(Base):
         "Recipient",
         back_populates="related_events"
     )
+    occurrences: Mapped[List["EventOccurrence"]] = relationship(
+        "EventOccurrence",
+        back_populates="event",
+    )
     user: Mapped["User"] = relationship(
         "User",
         back_populates="events",
@@ -72,4 +76,9 @@ class EventOccurrence(Base):
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
 
     event_id: Mapped[int] = mapped_column(Integer, ForeignKey("events.id"), nullable=False)
+
+    event: Mapped["Event"] = relationship(
+        "Event",
+        back_populates="occurrences",
+    )
 
