@@ -48,6 +48,9 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True,
+        compare_server_default=True,
+        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -74,6 +77,8 @@ async def run_async_migrations() -> None:
             connection=conn,
             target_metadata=target_metadata,
             compare_type=True,
+            compare_server_default=True,
+            render_as_batch=True,
         )
         with context.begin_transaction():
             context.run_migrations()
