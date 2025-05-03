@@ -1,6 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
+from typing import Sequence
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +11,6 @@ from app.api.v1.features.events.exceptions import PastEventError
 from app.api.v1.features.events.models import Event, EventOccurrence
 from app.api.v1.features.events.schemas import EventCreate, EventModel, EventUpdate
 from app.api.v1.features.auth.models import User, SimpleUser
-from app.core.database import async_session
 
 
 async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> EventModel:
@@ -46,8 +47,10 @@ async def event_delete(event: Event, db: AsyncSession):
     await db.commit()
 
 
-async def get_event(event_id: int, user: User, db: AsyncSession) -> Event:
+async def get_event(event_id: int, user: User, db: AsyncSession, with_occurrence: bool = False) -> Event:
     stmt = select(Event).where(Event.id == event_id).where(Event.deleted_at == None)
+    if with_occurrence:
+        stmt = stmt.options(selectinload(Event.occurrences))
     if isinstance(user, SimpleUser):
         stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
     result = await db.execute(stmt)
@@ -57,5 +60,24 @@ async def get_event(event_id: int, user: User, db: AsyncSession) -> Event:
     return event
 
 
-async def get_event_list(user: User, db: AsyncSession) -> Event:
-    pass
+async def get_next_occurrence(event_id: int, db: AsyncSession) -> EventOccurrence:
+    stmt = (select(EventOccurrence)
+            .where(EventOccurrence.event_id == event_id)
+            .where(EventOccurrence.occurrence_date >= date.today())
+            .order_by(EventOccurrence.occurrence_date.asc())
+            .limit(1))
+    result = await db.execute(stmt)
+    occurrence = result.scalar_one_or_none()
+    return occurrence
+
+
+async def get_event_list(user: User, db: AsyncSession, with_occurrence: bool = False) -> Sequence[Event]:
+    stmt = (select(Event)
+            .where(Event.deleted_at == None))
+    if with_occurrence:
+        stmt = stmt.options(selectinload(Event.occurrences))
+    if isinstance(user, SimpleUser):
+        stmt = stmt.where(or_(Event.user_id == user.id, Event.is_global))
+    result = await db.execute(stmt)
+    events = result.scalars().all()
+    return events

@@ -66,7 +66,7 @@ async def get_current_user(
         db: AsyncSession = Depends(get_session),
         token_payload: dict = Depends(get_token_payload)) -> User:
     async with db.begin():
-        user = get_user_by_id(token_payload["id"])
+        user = await get_user_by_id(token_payload["id"], db)
 
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")

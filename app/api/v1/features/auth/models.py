@@ -30,7 +30,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
-    events: Mapped["Event"] = relationship(
+    events: Mapped[List["Event"]] = relationship(
         "Event",
         back_populates="user",
     )
