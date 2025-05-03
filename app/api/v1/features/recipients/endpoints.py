@@ -1,6 +1,5 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.database import get_session
 from app.api.v1.features.exceptions import NotFoundError
@@ -10,7 +9,7 @@ from app.api.v1.features.recipients.models import Recipient
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientRead, RecipientUpdateInfo, \
     RecipientUpdateBirthday
 from app.api.v1.features.recipients.service import get_recipient, recipient_create, recipient_update_info, \
-    recipient_delete
+    recipient_delete, get_recipient_list
 
 router = APIRouter(prefix="/recipients", tags=["recipients"])
 
@@ -28,11 +27,7 @@ async def index(
         user: User = Depends(get_current_user),
 ):
     """Get list of recipients"""
-    stmt = select(Recipient)
-    if user.role == UserRole.USER.value:
-        stmt = stmt.where(Recipient.user_id == user.id)
-    result = await db.execute(stmt)
-    recipients = result.scalars().all()
+    recipients = await get_recipient_list(user, db)
     return list(map(RecipientRead.model_validate, recipients))
 
 

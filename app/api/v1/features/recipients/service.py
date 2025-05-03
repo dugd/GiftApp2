@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,3 +44,11 @@ async def get_recipient(recipient_id: int, user: User, db: AsyncSession) -> Reci
     if not recipient:
         raise NotFoundError("recipient not found")
     return recipient
+
+
+async def get_recipient_list(user: User, db: AsyncSession) -> Sequence[Recipient]:
+    stmt = select(Recipient)
+    if user.role == UserRole.USER.value:
+        stmt = stmt.where(Recipient.user_id == user.id)
+    result = await db.execute(stmt)
+    return result.scalars().all()
