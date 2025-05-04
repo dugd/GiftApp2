@@ -3,15 +3,15 @@ from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.features.exceptions import NotFoundError
-from app.api.v1.features.auth.dependencies import get_current_user
-from app.api.v1.features.auth.models import User, SimpleUser, AdminUser
+from app.api.v1.features.auth.dependencies import get_current_user, RoleChecker
+from app.api.v1.features.auth.models import User, SimpleUser, AdminUser, UserRole
 from app.api.v1.features.events.exceptions import PastEventError
 from app.api.v1.features.events.schemas import (
     EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
     EventNext, CalendarView, EventOccurrenceModel
 )
 from app.api.v1.features.events.service import event_create, event_update_info, event_delete, get_event, get_event_list, \
-    get_next_occurrence
+    get_next_occurrence, generate_missing_occurrences
 from app.api.v1.features.events.models import Event
 from app.core.database import get_session
 
@@ -67,6 +67,17 @@ async def index_occurrences(
         response.root[event.id] = [EventOccurrenceId.model_validate(occur) for occur in event.occurrences]
 
     return response
+
+
+@router.post(
+    "/occurrences/generate",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RoleChecker(UserRole.ROOT.value))])
+async def manual_generate(
+        db: AsyncSession = Depends(get_session),
+):
+        created = await generate_missing_occurrences(db)
+        return {"created": created}
 
 
 @router.get("/calendar", response_model=CalendarView)
