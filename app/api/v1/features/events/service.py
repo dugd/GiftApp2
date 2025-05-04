@@ -3,7 +3,7 @@ from typing import Sequence
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.sql import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,7 +38,10 @@ async def generate_missing_occurrences(db: AsyncSession) -> int:
     today = date.today()
     created = 0
 
-    stmt = select(Event).where(Event.deleted_at == None).where(Event.is_repeating == True)
+    stmt = (select(Event)
+            .where(Event.deleted_at == None)
+            .options(joinedload(Event.last_occurrence))
+            .where(Event.is_repeating == True))
     result = await db.execute(stmt)
     events = result.scalars().all()
 
