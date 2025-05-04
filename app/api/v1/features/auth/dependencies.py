@@ -4,7 +4,7 @@ from jose import JWTError, ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.api.v1.features.auth.models import User
+from app.models import User
 from app.api.v1.features.auth.security import decode_token
 from app.api.v1.features.auth.service import get_user_by_id
 

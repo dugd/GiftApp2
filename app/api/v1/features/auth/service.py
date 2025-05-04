@@ -1,9 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.features.auth.security import hash_password, verify_password
-from app.api.v1.features.auth.models import User, SimpleUser
-from app.api.v1.features.auth.security import create_access_token, create_refresh_token
+from app.models import User, SimpleUser
+from app.api.v1.features.auth.security import (
+    hash_password, verify_password, create_access_token, create_refresh_token
+)
 from app.api.v1.features.auth.schemas import UserRegister, TokenPair
 from app.api.v1.features.auth.exceptions import EmailAlreadyTaken, WrongCredentials
 

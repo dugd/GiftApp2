@@ -7,11 +7,10 @@ from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.sql import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Event, EventOccurrence, User, SimpleUser
 from app.api.v1.features.exceptions import NotFoundError
 from app.api.v1.features.events.exceptions import PastEventError
-from app.api.v1.features.events.models import Event, EventOccurrence
 from app.api.v1.features.events.schemas import EventCreate, EventModel, EventUpdate
-from app.api.v1.features.auth.models import User, SimpleUser
 
 
 async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> EventModel:

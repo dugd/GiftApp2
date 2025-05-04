@@ -5,10 +5,11 @@ from sqlalchemy import Integer, String, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.types import JSON
-from app.models.base import Base
+from app.core.base import Base
 
 if TYPE_CHECKING:
-    from app.api.v1.features.models import SimpleUser, Event
+    from .auth import SimpleUser
+    from .events import Event
 
 
 class Recipient(Base):

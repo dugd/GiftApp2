@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
-from app.api.v1.features.auth.models import UserRole
+from app.models.auth import UserRole
 
 
 class UserRegister(BaseModel):

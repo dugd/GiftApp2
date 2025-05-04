@@ -5,10 +5,11 @@ from enum import Enum
 from sqlalchemy import Integer, String, Date, TIMESTAMP, ForeignKey, CheckConstraint, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
-from app.models.base import Base
+from app.core.base import Base
 
 if TYPE_CHECKING:
-    from app.api.v1.features.models import User, Recipient
+    from .auth import User
+    from .recipients import Recipient
 
 class EventType(Enum):
     BIRTHDAY = "BIRTHDAY"

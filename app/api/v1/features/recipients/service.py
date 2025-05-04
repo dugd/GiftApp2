@@ -3,10 +3,9 @@ from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Recipient, User, UserRole
 from app.api.v1.features.exceptions import NotFoundError
-from app.api.v1.features.recipients.models import Recipient
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday
-from app.api.v1.features.auth.models import User, UserRole
 
 
 async def recipient_create(data: RecipientCreate, user_id: int, db: AsyncSession) -> Recipient:
