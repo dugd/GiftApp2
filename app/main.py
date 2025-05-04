@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from apscheduler.triggers.cron import CronTrigger
 
 from app.core.config import settings
-from app.sheduler import scheduler, run_generate_occur
+from app.sсheduler import scheduler, run_generate_occur
 from app.api.v1.router import api_router
 
 @asynccontextmanager
