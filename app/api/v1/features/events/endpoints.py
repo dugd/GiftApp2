@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models import User, SimpleUser, AdminUser, UserRole, Event
-from app.api.v1.features.exceptions import NotFoundError
-from app.api.v1.features.auth.dependencies import get_current_user, RoleChecker
+from app.api.v1.exceptions import NotFoundError
+from app.api.v1.dependencies import get_current_user, RoleChecker
 from app.api.v1.features.events.exceptions import PastEventError
 from app.api.v1.features.events.schemas import (
     EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
