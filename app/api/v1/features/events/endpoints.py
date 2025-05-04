@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models import User, SimpleUser, AdminUser, UserRole, Event
-from app.api.v1.exceptions import NotFoundError
 from app.api.v1.dependencies import get_current_user, RoleChecker
 from app.api.v1.features.events.exceptions import PastEventError
 from app.api.v1.features.events.schemas import (
@@ -24,10 +23,7 @@ async def get_event_or_404(
         with_occurrence: bool = False,
 ) -> Event:
     """Fetch an event by ID with user-specific access control, or raise 404."""
-    try:
-        event = await get_event(event_id, user, db, with_occurrence=with_occurrence)
-    except NotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    event = await get_event(event_id, user, db, with_occurrence=with_occurrence)
 
     return event
 

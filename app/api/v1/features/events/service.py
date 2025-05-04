@@ -16,7 +16,7 @@ from app.api.v1.features.events.schemas import EventCreate, EventModel, EventUpd
 async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> EventModel:
     now = datetime.now(timezone.utc)
     if data.start_date < now.date():
-        raise PastEventError("event cannot be created in the past")
+        raise PastEventError(now.date())
 
     event = Event(**data.model_dump(), user_id=user_id)
     db.add(event)
@@ -95,7 +95,7 @@ async def get_event(event_id: int, user: User, db: AsyncSession, with_occurrence
     result = await db.execute(stmt)
     event = result.scalar_one_or_none()
     if not event:
-        raise NotFoundError("event not found")
+        raise NotFoundError("Event")
     return event
 
 

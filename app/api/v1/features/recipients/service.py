@@ -41,7 +41,7 @@ async def get_recipient(recipient_id: int, user: User, db: AsyncSession) -> Reci
     result = await db.execute(stmt)
     recipient = result.scalar_one_or_none()
     if not recipient:
-        raise NotFoundError("recipient not found")
+        raise NotFoundError("Recipient")
     return recipient
 
 

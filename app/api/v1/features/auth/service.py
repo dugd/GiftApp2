@@ -8,10 +8,11 @@ from app.api.v1.features.auth.security import (
 from app.api.v1.features.auth.schemas import UserRegister, TokenPair
 from app.api.v1.features.auth.exceptions import EmailAlreadyTaken, WrongCredentials
 
+
 async def register_user(user_data: UserRegister, db: AsyncSession) -> User:
     existing_user = await get_user_by_email(str(user_data.email), db)
     if existing_user:
-        raise EmailAlreadyTaken("Email already registered")
+        raise EmailAlreadyTaken(str(user_data.email))
     user = SimpleUser(
         email=str(user_data.email),
         hashed_password=hash_password(user_data.password),
@@ -25,7 +26,7 @@ async def register_user(user_data: UserRegister, db: AsyncSession) -> User:
 async def authenticate_user(email: str, password: str, db: AsyncSession) -> User:
     user = await get_user_by_email(email, db)
     if not user or not verify_password(password, user.hashed_password):
-        raise WrongCredentials("Incorrect credentials")
+        raise WrongCredentials()
     return user
 
 
