@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, date
 from typing import Sequence
 
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import or_
@@ -31,6 +32,42 @@ async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> Eve
     await db.commit()
 
     return EventModel.model_validate(event)
+
+
+async def generate_missing_occurrences(db: AsyncSession) -> int:
+    today = date.today()
+    created = 0
+
+    stmt = select(Event).where(Event.deleted_at == None).where(Event.is_repeating == True)
+    result = await db.execute(stmt)
+    events = result.scalars().all()
+
+    for event in events:
+        last_occ = event.last_occurrence
+        if not last_occ:
+            last_occ = EventOccurrence(
+                event_id=event.id,
+                occurrence_date=event.start_date,
+                created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            )
+            db.add(last_occ)
+            created += 1
+
+        last_date = last_occ.occurrence_date
+
+        while last_date < today:
+            next_date = last_date + relativedelta(years=1)
+            last_occ = EventOccurrence(
+                event_id=event.id,
+                occurrence_date=next_date,
+                created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            )
+            db.add(last_occ)
+            last_date = next_date
+            created += 1
+
+    await db.commit()
+    return created
 
 
 async def event_update_info(event: Event, data: EventUpdate, db: AsyncSession) -> Event:
