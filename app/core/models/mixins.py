@@ -37,7 +37,7 @@ class GUID(TypeDecorator):
 
 class SurrogatePKMixin:
     id: Mapped[UUID] = mapped_column(
-        GUID(),
+        GUID,
         primary_key=True,
         default=uuid4,
     )

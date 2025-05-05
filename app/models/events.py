@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING, List, Optional
 from datetime import date
 from enum import Enum
+from uuid import UUID
 
 from sqlalchemy import Integer, String, Date, ForeignKey, CheckConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
 from app.core.models.base import Base
-from app.core.models.mixins import TimestampMixin, SoftDeleteMixin
+from app.core.models.mixins import GUID, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin
 
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ class EventType(Enum):
     OTHER = "OTHER"
 
 
-class Event(TimestampMixin, SoftDeleteMixin, Base):
+class Event(SurrogatePKMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "events"
     __table_args__ = (
         CheckConstraint(
@@ -29,15 +30,14 @@ class Event(TimestampMixin, SoftDeleteMixin, Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(32), nullable=False)
     type: Mapped[str] = mapped_column(String(32), nullable=False, default=EventType.OTHER.value)
     is_global: Mapped[bool] = mapped_column(Boolean, nullable=False)
     is_repeating: Mapped[bool] = mapped_column(Boolean, nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
-    recipient_id: Mapped[int] = mapped_column(Integer, ForeignKey("recipients.id"), nullable=True)
+    user_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("users.id"), nullable=True)
+    recipient_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("recipients.id"), nullable=True)
 
 
     related_recipient: Mapped["Recipient"] = relationship(
@@ -71,13 +71,12 @@ class Event(TimestampMixin, SoftDeleteMixin, Base):
             raise TypeError(f"Type must be str or EventType, got {type(value)}")
 
 
-class EventOccurrence(TimestampMixin, Base):
+class EventOccurrence(SurrogatePKMixin, TimestampMixin, Base):
     __tablename__ = "event_occurrences"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     occurrence_date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    event_id: Mapped[int] = mapped_column(Integer, ForeignKey("events.id"), nullable=False)
+    event_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("events.id"), nullable=False)
 
     event: Mapped["Event"] = relationship(
         "Event",
