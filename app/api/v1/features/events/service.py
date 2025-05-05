@@ -25,7 +25,6 @@ async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> Eve
     event_occurrence = EventOccurrence(
         occurrence_date=data.start_date,
         event_id=event.id,
-        created_at=datetime.now(timezone.utc).replace(tzinfo=None)
     )
     db.add(event_occurrence)
     await db.commit()
@@ -50,7 +49,6 @@ async def generate_missing_occurrences(db: AsyncSession) -> int:
             last_occ = EventOccurrence(
                 event_id=event.id,
                 occurrence_date=event.start_date,
-                created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
             db.add(last_occ)
             created += 1
@@ -62,7 +60,6 @@ async def generate_missing_occurrences(db: AsyncSession) -> int:
             last_occ = EventOccurrence(
                 event_id=event.id,
                 occurrence_date=next_date,
-                created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
             db.add(last_occ)
             last_date = next_date

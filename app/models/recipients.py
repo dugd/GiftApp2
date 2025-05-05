@@ -5,7 +5,8 @@ from sqlalchemy import Integer, String, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.types import JSON
-from app.core.base import Base
+
+from app.core.models.base import Base
 
 if TYPE_CHECKING:
     from .auth import SimpleUser

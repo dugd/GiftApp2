@@ -1,11 +1,13 @@
 from typing import TYPE_CHECKING, List, Optional
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
 
-from sqlalchemy import Integer, String, Date, TIMESTAMP, ForeignKey, CheckConstraint, Boolean
-from sqlalchemy.sql import func
+from sqlalchemy import Integer, String, Date, ForeignKey, CheckConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
-from app.core.base import Base
+
+from app.core.models.base import Base
+from app.core.models.mixins import TimestampMixin, SoftDeleteMixin
+
 
 if TYPE_CHECKING:
     from .auth import User
@@ -18,7 +20,7 @@ class EventType(Enum):
     OTHER = "OTHER"
 
 
-class Event(Base):
+class Event(TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "events"
     __table_args__ = (
         CheckConstraint(
@@ -33,8 +35,6 @@ class Event(Base):
     is_global: Mapped[bool] = mapped_column(Boolean, nullable=False)
     is_repeating: Mapped[bool] = mapped_column(Boolean, nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
-
-    deleted_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=True)
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     recipient_id: Mapped[int] = mapped_column(Integer, ForeignKey("recipients.id"), nullable=True)
@@ -59,9 +59,6 @@ class Event(Base):
         back_populates="events",
     )
 
-    def soft_delete(self):
-        self.deleted_at = func.now()
-
     @validates("type")
     def validate_type(self, key, value):
         if isinstance(value, EventType):
@@ -74,13 +71,11 @@ class Event(Base):
             raise TypeError(f"Type must be str or EventType, got {type(value)}")
 
 
-class EventOccurrence(Base):
+class EventOccurrence(TimestampMixin, Base):
     __tablename__ = "event_occurrences"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     occurrence_date: Mapped[date] = mapped_column(Date, nullable=False)
-
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
 
     event_id: Mapped[int] = mapped_column(Integer, ForeignKey("events.id"), nullable=False)
 

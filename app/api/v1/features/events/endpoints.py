@@ -51,7 +51,7 @@ async def index_occurrences(
         db: AsyncSession = Depends(get_session),
 ):
     """
-    Fetches and processes occurrences of events within a specified date range. This function queries the database for
+    Fetches and processes occurrences of events within a specified date range. This function queries the models for
     events and their occurrences, processes them according to user type, and returns the data in a structured response
     format suitable for the expected response model.
     """

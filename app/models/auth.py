@@ -1,11 +1,11 @@
 from typing import List, TYPE_CHECKING
-from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Integer, String, DateTime, func
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
-from app.core.base import Base
+from app.core.models.mixins import TimestampMixin
+from app.core.models.base import Base
 
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ class UserRole(Enum):
     USER = "USER"
 
 
-class User(Base):
+class User(TimestampMixin, Base):
     __tablename__ = "users"
     __mapper_args__ = {
         "polymorphic_on": "role",
@@ -29,7 +29,6 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     role: Mapped[str] = mapped_column(nullable=False, default=UserRole.USER.value)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     events: Mapped[List["Event"]] = relationship(
         "Event",
