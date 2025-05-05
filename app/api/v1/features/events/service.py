@@ -7,17 +7,16 @@ from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.sql import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.features.exceptions import NotFoundError
+from app.models import Event, EventOccurrence, User, SimpleUser
+from app.api.v1.exceptions import NotFoundError
 from app.api.v1.features.events.exceptions import PastEventError
-from app.api.v1.features.events.models import Event, EventOccurrence
 from app.api.v1.features.events.schemas import EventCreate, EventModel, EventUpdate
-from app.api.v1.features.auth.models import User, SimpleUser
 
 
 async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> EventModel:
     now = datetime.now(timezone.utc)
     if data.start_date < now.date():
-        raise PastEventError("event cannot be created in the past")
+        raise PastEventError(now.date())
 
     event = Event(**data.model_dump(), user_id=user_id)
     db.add(event)
@@ -96,7 +95,7 @@ async def get_event(event_id: int, user: User, db: AsyncSession, with_occurrence
     result = await db.execute(stmt)
     event = result.scalar_one_or_none()
     if not event:
-        raise NotFoundError("event not found")
+        raise NotFoundError("Event")
     return event
 
 

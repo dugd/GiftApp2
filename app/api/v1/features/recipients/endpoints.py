@@ -1,11 +1,9 @@
-from fastapi import APIRouter, status, Depends, HTTPException
+from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.api.v1.features.exceptions import NotFoundError
-from app.api.v1.features.auth.models import User, UserRole
-from app.api.v1.features.auth.dependencies import get_current_user, RoleChecker
-from app.api.v1.features.recipients.models import Recipient
+from app.models import Recipient, User, UserRole
+from app.api.v1.dependencies import get_current_user, RoleChecker
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientRead, RecipientUpdateInfo, \
     RecipientUpdateBirthday
 from app.api.v1.features.recipients.service import get_recipient, recipient_create, recipient_update_info, \
@@ -15,10 +13,7 @@ router = APIRouter(prefix="/recipients", tags=["recipients"])
 
 
 async def get_recipient_or_404(db: AsyncSession, recipient_id: int, user: User) -> Recipient:
-    try:
-        return await get_recipient(recipient_id, user, db)
-    except NotFoundError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipient not found")
+    return await get_recipient(recipient_id, user, db)
 
 
 @router.get("/", response_model=list[RecipientRead])

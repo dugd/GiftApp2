@@ -3,10 +3,9 @@ from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.features.exceptions import NotFoundError
-from app.api.v1.features.recipients.models import Recipient
+from app.models import Recipient, User, UserRole
+from app.api.v1.exceptions import NotFoundError
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday
-from app.api.v1.features.auth.models import User, UserRole
 
 
 async def recipient_create(data: RecipientCreate, user_id: int, db: AsyncSession) -> Recipient:
@@ -42,7 +41,7 @@ async def get_recipient(recipient_id: int, user: User, db: AsyncSession) -> Reci
     result = await db.execute(stmt)
     recipient = result.scalar_one_or_none()
     if not recipient:
-        raise NotFoundError("recipient not found")
+        raise NotFoundError("Recipient")
     return recipient
 
 

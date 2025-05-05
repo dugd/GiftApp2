@@ -1,9 +1,11 @@
-from app.api.v1.features.exceptions import GiftAppError
+from app.api.v1.exceptions import GiftAppError
 
 
 class WrongCredentials(GiftAppError):
-    pass
+    def __init__(self):
+        super().__init__("Incorrect credentials", status_code=401)
 
 
 class EmailAlreadyTaken(GiftAppError):
-    pass
+    def __init__(self, email: str):
+        super().__init__(f"email '{email}' is already taken", status_code=409)

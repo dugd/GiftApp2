@@ -1,5 +1,7 @@
-from app.api.v1.features.exceptions import GiftAppError
+from datetime import date
+from app.api.v1.exceptions import GiftAppError
 
 
 class PastEventError(GiftAppError):
-    pass
+    def __init__(self, now: date):
+        super().__init__(f"Event cannot be created before {str(now)}", status_code=400)
