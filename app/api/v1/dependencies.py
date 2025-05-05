@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -41,3 +42,7 @@ class RoleChecker:
         if not user.role in self.allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return True
+
+
+DBSessionDepends = Annotated[AsyncSession, Depends(get_session)]
+CurrentUserDepends = Annotated[User, Depends(get_current_user)]

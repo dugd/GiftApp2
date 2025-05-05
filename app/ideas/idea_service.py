@@ -23,7 +23,8 @@ class IdeaService:
         await self.db.commit()
         return IdeaModel.model_validate(idea)
 
-    async def update_idea_info(self, idea: GiftIdea, data: IdeaUpdateInfo, user: User) -> IdeaModel:
+    async def update_idea_info(self, idea_id: UUID, data: IdeaUpdateInfo, user: User) -> IdeaModel:
+        idea = await self.get_idea_by_id(idea_id, user)
         if isinstance(user, SimpleUser):
             if idea.is_global:
                 raise GiftAppError("forbidden to change global idea")
@@ -32,14 +33,16 @@ class IdeaService:
         await self.db.commit()
         return IdeaModel.model_validate(idea)
 
-    async def soft_delete_idea(self, idea: GiftIdea, user: User):
+    async def soft_delete_idea(self, idea_id: UUID, user: User):
+        idea = await self.get_idea_by_id(idea_id, user)
         if isinstance(user, SimpleUser):
             if idea.is_global:
                 raise GiftAppError("forbidden to delete global idea")
         idea.soft_delete()
         await self.db.commit()
 
-    async def archive_idea(self, idea: GiftIdea, user: User) -> IdeaModel:
+    async def archive_idea(self, idea_id: UUID, user: User) -> IdeaModel:
+        idea = await self.get_idea_by_id(idea_id, user)
         if isinstance(user, SimpleUser):
             if idea.is_global:
                 raise GiftAppError("forbidden to archive global idea")
