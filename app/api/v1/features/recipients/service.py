@@ -1,3 +1,4 @@
+from uuid import UUID
 from typing import Sequence
 
 from sqlalchemy import select
@@ -8,7 +9,7 @@ from app.api.v1.exceptions import NotFoundError
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday
 
 
-async def recipient_create(data: RecipientCreate, user_id: int, db: AsyncSession) -> Recipient:
+async def recipient_create(data: RecipientCreate, user_id: UUID, db: AsyncSession) -> Recipient:
     recipient = Recipient(**data.model_dump(), user_id=user_id)
     db.add(recipient)
     await db.commit()
@@ -34,7 +35,7 @@ async def recipient_delete(recipient: Recipient, db: AsyncSession):
     await db.commit()
 
 
-async def get_recipient(recipient_id: int, user: User, db: AsyncSession) -> Recipient:
+async def get_recipient(recipient_id: UUID, user: User, db: AsyncSession) -> Recipient:
     stmt = select(Recipient).where(Recipient.id == recipient_id)
     if user.role == UserRole.USER.value:
         stmt = stmt.where(Recipient.user_id == user.id)

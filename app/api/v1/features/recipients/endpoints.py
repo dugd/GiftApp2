@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +13,7 @@ from app.api.v1.features.recipients.service import get_recipient, recipient_crea
 router = APIRouter(prefix="/recipients", tags=["recipients"])
 
 
-async def get_recipient_or_404(db: AsyncSession, recipient_id: int, user: User) -> Recipient:
+async def get_recipient_or_404(db: AsyncSession, recipient_id: UUID, user: User) -> Recipient:
     return await get_recipient(recipient_id, user, db)
 
 
@@ -28,7 +29,7 @@ async def index(
 
 @router.get("/{recipient_id}", response_model=RecipientRead)
 async def get(
-        recipient_id: int,
+        recipient_id: UUID,
         db: AsyncSession = Depends(get_session),
         user: User = Depends(get_current_user),
 ):
@@ -54,7 +55,7 @@ async def create(
 
 @router.patch("/{recipient_id}", response_model=RecipientRead, status_code=status.HTTP_202_ACCEPTED)
 async def update_info(
-        recipient_id: int,
+        recipient_id: UUID,
         data: RecipientUpdateInfo,
         db: AsyncSession = Depends(get_session),
         user: User = Depends(get_current_user),
@@ -69,7 +70,7 @@ async def update_info(
 
 @router.post("/{recipient_id}/set-birthday", response_model=RecipientRead, status_code=status.HTTP_202_ACCEPTED)
 async def set_birthday(
-        recipient_id: int,
+        recipient_id: UUID,
         data: RecipientUpdateBirthday,
         db: AsyncSession = Depends(get_session),
         user: User = Depends(get_current_user),
@@ -86,7 +87,7 @@ async def set_birthday(
 
 @router.delete("/{recipient_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(
-        recipient_id: int,
+        recipient_id: UUID,
         db: AsyncSession = Depends(get_session),
         user: User = Depends(get_current_user),
 ):

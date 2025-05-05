@@ -32,8 +32,8 @@ async def authenticate_user(email: str, password: str, db: AsyncSession) -> User
 
 def create_token_pair(user: User) -> TokenPair:
     new_access_token = create_access_token(
-        payload={"id": user.id, "sub": user.email, "role": user.role, "type": "access"})
-    new_refresh_token = create_refresh_token(payload={"id": user.id, "type": "refresh"})
+        payload={"id": user.id.hex, "sub": user.email, "role": user.role, "type": "access"})
+    new_refresh_token = create_refresh_token(payload={"id": user.id.hex, "type": "refresh"})
 
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)
 

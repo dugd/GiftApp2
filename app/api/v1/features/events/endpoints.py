@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import date
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/events", tags=["events"])
 
 
 async def get_event_or_404(
-        event_id: int,
+        event_id: UUID,
         user: User,
         db: AsyncSession,
         with_occurrence: bool = False,
@@ -122,7 +123,7 @@ async def create(
 
 @router.get("/{event_id}", response_model=EventFull)
 async def get(
-        event_id: int,
+        event_id: UUID,
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
 ):
@@ -136,7 +137,7 @@ async def get(
 
 @router.get("/{event_id}/info", response_model=EventModel)
 async def get_info(
-        event_id: int,
+        event_id: UUID,
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
 ):
@@ -147,7 +148,7 @@ async def get_info(
 
 @router.get("/{event_id}/next", response_model=EventNext)
 async def get_next(
-        event_id: int,
+        event_id: UUID,
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
 ):
@@ -162,7 +163,7 @@ async def get_next(
 
 @router.patch("/{event_id}", response_model=EventModel, status_code=status.HTTP_202_ACCEPTED)
 async def update_info(
-        event_id: int,
+        event_id: UUID,
         data: EventUpdate,
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
@@ -179,7 +180,7 @@ async def update_info(
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(
-        event_id: int,
+        event_id: UUID,
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_session),
 ):
@@ -195,7 +196,7 @@ async def delete(
 @router.get(
     "/{event_id}/occurrences", response_model=list[EventOccurrenceId])
 async def get_occurrences(
-        event_id: int,
+        event_id: UUID,
         from_date: date,
         to_date: date,
         user: User = Depends(get_current_user),
