@@ -17,7 +17,7 @@ async def create(
         data: IdeaCreate,
 ):
     service = IdeaService(db)
-    return service.create_idea(data, user)
+    return await service.create_idea(data, user)
 
 
 @router.get("/my", response_model=List[IdeaModel])
@@ -27,7 +27,7 @@ async def index_my(
         archived: bool = False,
 ):
     service = IdeaService(db)
-    return service.get_users_ideas_list(user.id)
+    return await service.get_users_ideas_list(user.id)
 
 
 @router.get("/global", response_model=List[IdeaModel])
@@ -37,7 +37,7 @@ async def index_global(
         archived: bool = False,
 ):
     service = IdeaService(db)
-    return service.get_global_ideas_list()
+    return await service.get_global_ideas_list()
 
 
 @router.get("/{idea_id}", response_model=List[IdeaModel])
@@ -47,7 +47,7 @@ async def get(
         idea_id: UUID,
 ):
     service = IdeaService(db)
-    return service.get_idea_by_id(idea_id, user)
+    return await service.get_idea_by_id(idea_id, user)
 
 
 @router.patch("/{idea_id}", response_model=List[IdeaModel], status_code=status.HTTP_202_ACCEPTED)

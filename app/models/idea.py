@@ -24,7 +24,7 @@ class GiftIdea(Base, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin):
     view_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     estimated_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
     is_global: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    archived_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP, nullable=False)
+    archived_at: Mapped[Optional[datetime]] = mapped_column(TIMESTAMP, nullable=True)
 
     def archive(self):
         self.archived_at = func.now()
