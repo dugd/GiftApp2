@@ -12,7 +12,7 @@ from app.core.models.mixins import GUID, SurrogatePKMixin, TimestampMixin, SoftD
 
 if TYPE_CHECKING:
     from .auth import User
-    from .recipients import Recipient
+    from .recipient import Recipient
 
 class EventType(Enum):
     BIRTHDAY = "BIRTHDAY"

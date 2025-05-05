@@ -9,8 +9,9 @@ from app.core.models.base import Base
 
 
 if TYPE_CHECKING:
-    from .recipients import Recipient
-    from .events import Event
+    from .recipient import Recipient
+    from .event import Event
+    from .idea import GiftIdea
 
 
 class UserRole(Enum):
@@ -31,6 +32,10 @@ class User(SurrogatePKMixin, TimestampMixin, Base):
 
     events: Mapped[List["Event"]] = relationship(
         "Event",
+        back_populates="user",
+    )
+    ideas: Mapped[List["GiftIdea"]] = relationship(
+        "GiftIdea",
         back_populates="user",
     )
 
