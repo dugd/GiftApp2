@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Recipient(Base):
     __tablename__ = "recipients"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(32), nullable=False)
     birthday: Mapped[date] = mapped_column(Date, nullable=True)

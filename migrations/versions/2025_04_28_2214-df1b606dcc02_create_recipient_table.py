@@ -29,8 +29,8 @@ def upgrade() -> None:
     sa.Column('relation', sa.String(length=32), nullable=True),
     sa.Column('preferences', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('notes', sa.String(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name="fk_recipients_user_id_users"),
+    sa.PrimaryKeyConstraint('id', name="pk_recipients")
     )
     op.create_index(op.f('ix_recipients_id'), 'recipients', ['id'], unique=False)
     # ### end Alembic commands ###

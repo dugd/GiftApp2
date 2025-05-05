@@ -30,9 +30,9 @@ def upgrade() -> None:
     sa.Column('start_date', sa.Date(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('recipient_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['recipient_id'], ['recipients.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['recipient_id'], ['recipients.id'], name="fk_events_recipient_id_recipients"),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name="fk_events_user_id_users"),
+    sa.PrimaryKeyConstraint('id', name="pk_events")
     )
     op.create_index(op.f('ix_events_id'), 'events', ['id'], unique=False)
     op.create_table('event_occurrences',
@@ -40,8 +40,8 @@ def upgrade() -> None:
     sa.Column('occurrence_date', sa.Date(), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(), nullable=False),
     sa.Column('event_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['event_id'], ['events.id'], name="fk_event_occurrences_event_id_events"),
+    sa.PrimaryKeyConstraint('id', name="pk_event_occurrences")
     )
     op.create_index(op.f('ix_event_occurrences_id'), 'event_occurrences', ['id'], unique=False)
     # ### end Alembic commands ###

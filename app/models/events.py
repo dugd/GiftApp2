@@ -23,11 +23,11 @@ class Event(Base):
     __table_args__ = (
         CheckConstraint(
             "(NOT is_global) OR (recipient_id IS NULL)",
-            name="chk_global_recipient_null",
+            name="global_recipient_null",
         ),
     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(32), nullable=False)
     type: Mapped[str] = mapped_column(String(32), nullable=False, default=EventType.OTHER.value)
     is_global: Mapped[bool] = mapped_column(Boolean, nullable=False)
