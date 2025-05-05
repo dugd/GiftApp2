@@ -6,7 +6,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import settings
-from app.core.base import Base
+from app.core.models.base import Base
 
 import app.models # noqa
 
@@ -50,7 +50,6 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
-        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -78,7 +77,6 @@ async def run_async_migrations() -> None:
             target_metadata=target_metadata,
             compare_type=True,
             compare_server_default=True,
-            render_as_batch=True,
         )
         with context.begin_transaction():
             context.run_migrations()

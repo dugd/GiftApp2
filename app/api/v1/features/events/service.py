@@ -1,3 +1,4 @@
+from uuid import UUID
 from datetime import datetime, timezone, date
 from typing import Sequence
 
@@ -13,7 +14,7 @@ from app.api.v1.features.events.exceptions import PastEventError
 from app.api.v1.features.events.schemas import EventCreate, EventModel, EventUpdate
 
 
-async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> EventModel:
+async def event_create(data: EventCreate, user_id: UUID, db: AsyncSession) -> EventModel:
     now = datetime.now(timezone.utc)
     if data.start_date < now.date():
         raise PastEventError(now.date())
@@ -25,7 +26,6 @@ async def event_create(data: EventCreate, user_id: int, db: AsyncSession) -> Eve
     event_occurrence = EventOccurrence(
         occurrence_date=data.start_date,
         event_id=event.id,
-        created_at=datetime.now(timezone.utc).replace(tzinfo=None)
     )
     db.add(event_occurrence)
     await db.commit()
@@ -50,7 +50,6 @@ async def generate_missing_occurrences(db: AsyncSession) -> int:
             last_occ = EventOccurrence(
                 event_id=event.id,
                 occurrence_date=event.start_date,
-                created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
             db.add(last_occ)
             created += 1
@@ -62,7 +61,6 @@ async def generate_missing_occurrences(db: AsyncSession) -> int:
             last_occ = EventOccurrence(
                 event_id=event.id,
                 occurrence_date=next_date,
-                created_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
             db.add(last_occ)
             last_date = next_date
@@ -86,7 +84,7 @@ async def event_delete(event: Event, db: AsyncSession):
     await db.commit()
 
 
-async def get_event(event_id: int, user: User, db: AsyncSession, with_occurrence: bool = False) -> Event:
+async def get_event(event_id: UUID, user: User, db: AsyncSession, with_occurrence: bool = False) -> Event:
     stmt = select(Event).where(Event.id == event_id).where(Event.deleted_at == None)
     if with_occurrence:
         stmt = stmt.options(selectinload(Event.occurrences))
@@ -99,7 +97,7 @@ async def get_event(event_id: int, user: User, db: AsyncSession, with_occurrence
     return event
 
 
-async def get_next_occurrence(event_id: int, db: AsyncSession) -> EventOccurrence:
+async def get_next_occurrence(event_id: UUID, db: AsyncSession) -> EventOccurrence:
     stmt = (select(EventOccurrence)
             .where(EventOccurrence.event_id == event_id)
             .where(EventOccurrence.occurrence_date >= date.today())

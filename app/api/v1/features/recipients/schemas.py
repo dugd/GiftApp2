@@ -1,3 +1,4 @@
+from uuid import UUID
 from typing import List, Optional
 from datetime import date
 
@@ -28,9 +29,9 @@ class RecipientCreate(RecipientBase):
 
 
 class RecipientRead(RecipientBase):
-    id: int
+    id: UUID
 
-    model_config =ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RecipientUpdateInfo(BaseModel):

@@ -1,11 +1,14 @@
 from typing import TYPE_CHECKING, List, Optional
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
+from uuid import UUID
 
-from sqlalchemy import Integer, String, Date, TIMESTAMP, ForeignKey, CheckConstraint, Boolean
-from sqlalchemy.sql import func
+from sqlalchemy import Integer, String, Date, ForeignKey, CheckConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
-from app.core.base import Base
+
+from app.core.models.base import Base
+from app.core.models.mixins import GUID, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin
+
 
 if TYPE_CHECKING:
     from .auth import User
@@ -18,26 +21,23 @@ class EventType(Enum):
     OTHER = "OTHER"
 
 
-class Event(Base):
+class Event(SurrogatePKMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "events"
     __table_args__ = (
         CheckConstraint(
             "(NOT is_global) OR (recipient_id IS NULL)",
-            name="chk_global_recipient_null",
+            name="global_recipient_null",
         ),
     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(32), nullable=False)
     type: Mapped[str] = mapped_column(String(32), nullable=False, default=EventType.OTHER.value)
     is_global: Mapped[bool] = mapped_column(Boolean, nullable=False)
     is_repeating: Mapped[bool] = mapped_column(Boolean, nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    deleted_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=True)
-
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
-    recipient_id: Mapped[int] = mapped_column(Integer, ForeignKey("recipients.id"), nullable=True)
+    user_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("users.id"), nullable=True)
+    recipient_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("recipients.id"), nullable=True)
 
 
     related_recipient: Mapped["Recipient"] = relationship(
@@ -59,9 +59,6 @@ class Event(Base):
         back_populates="events",
     )
 
-    def soft_delete(self):
-        self.deleted_at = func.now()
-
     @validates("type")
     def validate_type(self, key, value):
         if isinstance(value, EventType):
@@ -74,15 +71,12 @@ class Event(Base):
             raise TypeError(f"Type must be str or EventType, got {type(value)}")
 
 
-class EventOccurrence(Base):
+class EventOccurrence(SurrogatePKMixin, TimestampMixin, Base):
     __tablename__ = "event_occurrences"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     occurrence_date: Mapped[date] = mapped_column(Date, nullable=False)
 
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
-
-    event_id: Mapped[int] = mapped_column(Integer, ForeignKey("events.id"), nullable=False)
+    event_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("events.id"), nullable=False)
 
     event: Mapped["Event"] = relationship(
         "Event",

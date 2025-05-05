@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from sqlalchemy import text, Table
 from app.core.database import async_session
 import app.api.v1.features.models # noqa
-from app.core.base import Base
+from app.core.models.base import Base
 
 def get_all_tables() -> list[Table]:
     return list(Base.metadata.sorted_tables)

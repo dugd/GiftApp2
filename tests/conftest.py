@@ -5,7 +5,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from app.main import app as _app
-from app.core.base import Base
+from app.core.models.base import Base
 import app.models  # noqa
 from app.models.auth import RootUser, SimpleUser
 from app.api.v1.features.auth.security import hash_password

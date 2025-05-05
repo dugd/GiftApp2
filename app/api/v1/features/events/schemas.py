@@ -1,3 +1,4 @@
+from uuid import UUID
 from typing import Optional, List, Dict
 from datetime import datetime, date
 
@@ -21,15 +22,15 @@ class EventCreate(EventBase):
 
 
 class EventModel(EventBase):
-    id: int
+    id: UUID
 
-    user_id: Optional[int] = None
+    user_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class EventOccurrenceId(BaseModel):
-    id: int
+    id: UUID
     occurrence_date: date
     created_at: datetime
 
@@ -37,7 +38,7 @@ class EventOccurrenceId(BaseModel):
 
 
 class EventOccurrenceModel(EventOccurrenceId):
-    event_id: int
+    event_id: UUID
 
 
 class EventFull(EventModel):
@@ -54,7 +55,7 @@ class EventUpdate(BaseModel):
 
 
 class OccurrencesView(RootModel):
-    root: Dict[int, List[EventOccurrenceId]] = {}
+    root: Dict[UUID, List[EventOccurrenceId]] = {}
 
 class CalendarView(RootModel):
     root: Dict[date, List[EventOccurrenceModel]] = {}
