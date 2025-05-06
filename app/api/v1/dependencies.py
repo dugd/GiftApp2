@@ -5,9 +5,9 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.models import User
+from app.schemas.user import UserModel
+from app.service.user import get_user_by_id
 from app.api.v1.features.auth.dependencies import access_token_scheme
-from app.service.auth_service import get_user_by_id
 
 
 async def get_token_payload(
@@ -24,7 +24,7 @@ async def get_token_payload(
 
 async def get_current_user(
         db: AsyncSession = Depends(get_session),
-        token_payload: dict = Depends(get_token_payload)) -> User:
+        token_payload: dict = Depends(get_token_payload)) -> UserModel:
     async with db.begin():
         user = await get_user_by_id(token_payload["id"], db)
 
@@ -38,11 +38,11 @@ class RoleChecker:
     def __init__(self, *allowed_roles):
         self.allowed_roles = allowed_roles
 
-    def __call__(self, user: User = Depends(get_current_user)) -> bool:
+    def __call__(self, user: UserModel = Depends(get_current_user)) -> bool:
         if not user.role in self.allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return True
 
 
 DBSessionDepends = Annotated[AsyncSession, Depends(get_session)]
-CurrentUserDepends = Annotated[User, Depends(get_current_user)]
+CurrentUserDepends = Annotated[UserModel, Depends(get_current_user)]

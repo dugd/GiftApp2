@@ -3,8 +3,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from app.schemas.idea_schemas import IdeaCreate, IdeaModel, IdeaUpdateInfo
-from app.service.idea_service import IdeaService
+from app.schemas.idea import IdeaCreate, IdeaModel, IdeaUpdateInfo
+from app.service.idea import IdeaService
 from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends
 
 router = APIRouter(prefix="/ideas", tags=["ideas"])

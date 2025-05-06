@@ -7,3 +7,7 @@ class GiftAppError(Exception):
 class NotFoundError(GiftAppError):
     def __init__(self, entity: str):
         super().__init__(f"{entity} not found", status_code=404)
+
+class PolicyPermissionError(GiftAppError):
+    def __init__(self, message: str):
+        super().__init__(message, 401)

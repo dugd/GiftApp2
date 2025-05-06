@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Event, EventOccurrence, User, SimpleUser
 from app.exceptions.exceptions import NotFoundError
 from app.exceptions.event.exceptions import PastEventError
-from app.schemas.event_schemas import EventCreate, EventModel, EventUpdate
+from app.schemas.event import EventCreate, EventModel, EventUpdate
 
 
 async def event_create(data: EventCreate, user_id: UUID, db: AsyncSession) -> EventModel:
