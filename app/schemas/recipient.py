@@ -31,6 +31,8 @@ class RecipientCreate(RecipientBase):
 class RecipientModel(RecipientBase):
     id: UUID
 
+    user_id: UUID
+
     model_config = ConfigDict(from_attributes=True)
 
 
