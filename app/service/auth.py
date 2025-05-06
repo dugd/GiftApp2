@@ -1,4 +1,3 @@
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User, SimpleUser
@@ -6,7 +5,8 @@ from app.utils.security import (
     hash_password, verify_password, create_access_token, create_refresh_token
 )
 from app.exceptions.auth.exceptions import EmailAlreadyTaken, WrongCredentials
-from app.schemas.user_schemas import UserRegister, TokenPair
+from app.schemas.auth import UserRegister, TokenPair
+from app.service.user import get_user_by_email
 
 
 async def register_user(user_data: UserRegister, db: AsyncSession) -> User:
@@ -36,15 +36,3 @@ def create_token_pair(user: User) -> TokenPair:
     new_refresh_token = create_refresh_token(payload={"id": user.id.hex, "type": "refresh"})
 
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)
-
-
-async def get_user_by_id(_id: int, db: AsyncSession) -> User | None:
-    stmt = select(User).where(User.id == _id)
-    result = await db.execute(stmt)
-    return result.scalar_one_or_none()
-
-
-async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
-    stmt = select(User).where(User.email == email)
-    result = await db.execute(stmt)
-    return result.scalar_one_or_none()

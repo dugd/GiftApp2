@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.models import User, SimpleUser, AdminUser, UserRole, Event
 from app.exceptions.event.exceptions import PastEventError
-from app.service.event_service import event_create, event_update_info, event_delete, get_event, get_event_list, \
+from app.service.event import event_create, event_update_info, event_delete, get_event, get_event_list, \
     get_next_occurrence, generate_missing_occurrences
-from app.schemas.event_schemas import (
+from app.schemas.event import (
     EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
     EventNext, CalendarView, EventOccurrenceModel
 )

@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models import User
+from app.service.user import get_user_by_id
 from app.api.v1.features.auth.dependencies import access_token_scheme
-from app.service.auth_service import get_user_by_id
 
 
 async def get_token_payload(
