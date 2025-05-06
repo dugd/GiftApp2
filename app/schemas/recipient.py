@@ -28,7 +28,7 @@ class RecipientCreate(RecipientBase):
     pass
 
 
-class RecipientRead(RecipientBase):
+class RecipientModel(RecipientBase):
     id: UUID
 
     model_config = ConfigDict(from_attributes=True)

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions.exceptions import GiftAppError, NotFoundError
 from app.models import GiftIdea, User, SimpleUser, AdminUser
-from app.ideas.idea_schemas import IdeaCreate, IdeaModel, IdeaUpdateInfo
+from app.schemas.idea import IdeaCreate, IdeaModel, IdeaUpdateInfo
 
 
 class IdeaService:
