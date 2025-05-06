@@ -1,17 +1,19 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
-from app.models import User
+from app.repositories.user import UserRepository
+from app.exceptions.exceptions import NotFoundError
 from app.schemas.user import UserModel
 
 
-async def get_user_by_id(_id: int, db: AsyncSession) -> UserModel | None:
-    stmt = select(User).where(User.id == _id)
-    result = await db.execute(stmt)
-    return result.scalar_one_or_none()
+async def get_user_by_id(_id: UUID, repo: UserRepository) -> UserModel:
+    user = repo.get_by_id(_id)
+    if not user:
+        raise NotFoundError("User")
+    return UserModel.model_validate(user)
 
 
-async def get_user_by_email(email: str, db: AsyncSession) -> UserModel | None:
-    stmt = select(User).where(User.email == email)
-    result = await db.execute(stmt)
-    return result.scalar_one_or_none()
+async def get_user_by_email(email: str, repo: UserRepository) -> UserModel:
+    user = repo.get_by_email(email)
+    if not user:
+        raise NotFoundError("User")
+    return UserModel.model_validate(user)

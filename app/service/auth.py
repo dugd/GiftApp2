@@ -1,31 +1,29 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models import User, SimpleUser
+from app.repositories.user import UserRepository
+from app.models import SimpleUser
 from app.schemas.user import UserModel
 from app.utils.security import (
     hash_password, verify_password, create_access_token, create_refresh_token
 )
 from app.exceptions.auth.exceptions import EmailAlreadyTaken, WrongCredentials
 from app.schemas.auth import UserRegister, TokenPair
-from app.service.user import get_user_by_email
 
 
-async def register_user(user_data: UserRegister, db: AsyncSession) -> UserModel:
-    existing_user = await get_user_by_email(str(user_data.email), db)
+async def register_user(user_data: UserRegister, repo: UserRepository) -> UserModel:
+    existing_user = await repo.get_by_email(str(user_data.email))
     if existing_user:
         raise EmailAlreadyTaken(str(user_data.email))
     user = SimpleUser(
         email=str(user_data.email),
         hashed_password=hash_password(user_data.password),
     )
-    db.add(user)
-    await db.commit()
+    await repo.add(user)
+    await repo.commit()
 
     return UserModel.model_validate(user)
 
 
-async def authenticate_user(email: str, password: str, db: AsyncSession) -> UserModel:
-    user = await get_user_by_email(email, db)
+async def authenticate_user(email: str, password: str, repo: UserRepository) -> UserModel:
+    user = await repo.get_by_email(str(email))
     if not user or not verify_password(password, user.hashed_password):
         raise WrongCredentials()
     return UserModel.model_validate(user)
