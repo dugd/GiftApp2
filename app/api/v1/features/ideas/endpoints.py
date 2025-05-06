@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from app.ideas.idea_schemas import IdeaCreate, IdeaModel, IdeaUpdateInfo
+from app.schemas.idea_schemas import IdeaCreate, IdeaModel, IdeaUpdateInfo
 from app.service.idea_service import IdeaService
 from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends
 

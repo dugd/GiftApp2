@@ -33,5 +33,5 @@ class GiftIdea(Base, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin):
 
     user: Mapped["User"] = relationship(
         "User",
-        back_populates="ideas",
+        back_populates="schemas",
     )

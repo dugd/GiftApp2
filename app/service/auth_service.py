@@ -2,11 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User, SimpleUser
-from app.api.v1.features.auth.security import (
+from app.utils.security import (
     hash_password, verify_password, create_access_token, create_refresh_token
 )
-from app.api.v1.features.auth.schemas import UserRegister, TokenPair
 from app.exceptions.auth.exceptions import EmailAlreadyTaken, WrongCredentials
+from app.schemas.user_schemas import UserRegister, TokenPair
 
 
 async def register_user(user_data: UserRegister, db: AsyncSession) -> User:

@@ -3,7 +3,7 @@ from datetime import timedelta
 from jose.exceptions import JWTError, ExpiredSignatureError
 import pytest
 
-from app.api.v1.features.auth.security import hash_password, verify_password, create_jwt_token, decode_token
+from app.utils.security import hash_password, verify_password, create_jwt_token, decode_token
 
 
 def test_password_hashing_and_verification():

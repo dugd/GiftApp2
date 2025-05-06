@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app.core.database import async_session
 from app.models import RootUser
-from app.api.v1.features.auth.security import hash_password
+from app.utils.security import hash_password
 
 
 DEFAULT_ROOT_EMAIL = "root@example.com"

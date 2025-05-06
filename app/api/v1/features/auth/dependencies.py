@@ -2,7 +2,7 @@ from fastapi import HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from jose import JWTError, ExpiredSignatureError
 
-from app.api.v1.features.auth.security import decode_token
+from app.utils.security import decode_token
 
 
 class TokenBearer(HTTPBearer):
