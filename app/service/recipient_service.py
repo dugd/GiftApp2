@@ -5,8 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Recipient, User, UserRole
-from app.api.v1.exceptions import NotFoundError
-from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday
+from app.exceptions.exceptions import NotFoundError
+from app.schemas.recipient_schemas import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday
 
 
 async def recipient_create(data: RecipientCreate, user_id: UUID, db: AsyncSession) -> Recipient:

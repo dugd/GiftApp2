@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.models import User
 from app.api.v1.features.auth.dependencies import access_token_scheme
-from app.api.v1.features.auth.service import get_user_by_id
+from app.service.auth_service import get_user_by_id
 
 
 async def get_token_payload(
@@ -41,3 +42,7 @@ class RoleChecker:
         if not user.role in self.allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return True
+
+
+DBSessionDepends = Annotated[AsyncSession, Depends(get_session)]
+CurrentUserDepends = Annotated[User, Depends(get_current_user)]

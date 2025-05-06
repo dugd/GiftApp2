@@ -2,7 +2,7 @@ from datetime import date
 from typing import Optional, List, TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Integer, String, Date, ForeignKey
+from sqlalchemy import String, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.types import JSON
@@ -13,7 +13,7 @@ from app.core.models.mixins import GUID, SurrogatePKMixin
 
 if TYPE_CHECKING:
     from .auth import SimpleUser
-    from .events import Event
+    from .event import Event
 
 
 class Recipient(SurrogatePKMixin, Base):

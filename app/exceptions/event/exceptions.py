@@ -1,5 +1,5 @@
 from datetime import date
-from app.api.v1.exceptions import GiftAppError
+from app.exceptions.exceptions import GiftAppError
 
 
 class PastEventError(GiftAppError):

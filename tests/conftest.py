@@ -8,7 +8,7 @@ from app.main import app as _app
 from app.core.models.base import Base
 import app.models  # noqa
 from app.models.auth import RootUser, SimpleUser
-from app.api.v1.features.auth.security import hash_password
+from app.utils.security import hash_password
 from app.core.database import get_session
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
