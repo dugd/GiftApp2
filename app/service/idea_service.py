@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.exceptions import GiftAppError, NotFoundError
+from app.exceptions.exceptions import GiftAppError, NotFoundError
 from app.models import GiftIdea, User, SimpleUser, AdminUser
 from app.ideas.idea_schemas import IdeaCreate, IdeaModel, IdeaUpdateInfo
 

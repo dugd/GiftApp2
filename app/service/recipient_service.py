@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Recipient, User, UserRole
-from app.api.v1.exceptions import NotFoundError
+from app.exceptions.exceptions import NotFoundError
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday
 
 

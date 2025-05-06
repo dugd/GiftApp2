@@ -1,7 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.core.database import async_session
-from app.api.v1.features.events.service import generate_missing_occurrences
+from app.service.event_service import generate_missing_occurrences
 
 
 scheduler = AsyncIOScheduler(

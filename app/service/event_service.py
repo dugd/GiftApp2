@@ -9,8 +9,8 @@ from sqlalchemy.sql import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Event, EventOccurrence, User, SimpleUser
-from app.api.v1.exceptions import NotFoundError
-from app.api.v1.features.events.exceptions import PastEventError
+from app.exceptions.exceptions import NotFoundError
+from app.exceptions.event.exceptions import PastEventError
 from app.api.v1.features.events.schemas import EventCreate, EventModel, EventUpdate
 
 

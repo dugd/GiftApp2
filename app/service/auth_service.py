@@ -6,7 +6,7 @@ from app.api.v1.features.auth.security import (
     hash_password, verify_password, create_access_token, create_refresh_token
 )
 from app.api.v1.features.auth.schemas import UserRegister, TokenPair
-from app.api.v1.features.auth.exceptions import EmailAlreadyTaken, WrongCredentials
+from app.exceptions.auth.exceptions import EmailAlreadyTaken, WrongCredentials
 
 
 async def register_user(user_data: UserRegister, db: AsyncSession) -> User:

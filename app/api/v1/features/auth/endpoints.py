@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User
 from app.core.database import get_session
+from app.service.auth_service import get_user_by_id, register_user, authenticate_user, create_token_pair
 from app.api.v1.dependencies import get_current_user
 from app.api.v1.features.auth.dependencies import refresh_token_scheme
 from app.api.v1.features.auth.schemas import UserRegister, UserRead, TokenPair
-from app.api.v1.features.auth.service import get_user_by_id, register_user, authenticate_user, create_token_pair
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

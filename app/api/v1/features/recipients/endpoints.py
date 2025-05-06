@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models import Recipient, User, UserRole
+from app.service.recipient_service import get_recipient, recipient_create, recipient_update_info, \
+    recipient_delete, get_recipient_list
 from app.api.v1.dependencies import get_current_user, RoleChecker
 from app.api.v1.features.recipients.schemas import RecipientCreate, RecipientRead, RecipientUpdateInfo, \
     RecipientUpdateBirthday
-from app.api.v1.features.recipients.service import get_recipient, recipient_create, recipient_update_info, \
-    recipient_delete, get_recipient_list
 
 router = APIRouter(prefix="/recipients", tags=["recipients"])
 
