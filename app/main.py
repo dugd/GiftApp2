@@ -1,10 +1,9 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, UploadFile
+from fastapi import FastAPI, Request
 from apscheduler.triggers.cron import CronTrigger
 from starlette.responses import JSONResponse
 
-from app.s3_service import upload_file
 from app.core.config import settings
 from app.sсheduler import scheduler, run_generate_occur
 from app.api.v1.router import api_router
@@ -40,9 +39,3 @@ app.include_router(api_router)
 @app.get("/")
 async def root():
     return {"message": "Welcome!", "app_name": settings.APP_NAME}
-
-
-@app.post("/upload-test")
-async def upload_image(file: UploadFile):
-    file_url = upload_file(await file.read(), file.filename, file.content_type)
-    return {"url": file_url}
