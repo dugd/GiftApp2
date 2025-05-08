@@ -25,10 +25,15 @@ class UserRepository:
 
     async def add(self, user: User) -> User:
         self.db.add(user)
+        await self.db.commit()
+        return user
+
+    async def update(self, user: User, data: dict) -> User:
+        for key, value in data.items():
+            setattr(user, key, value)
+        await self.db.commit()
         return user
 
     async def delete(self, user: User) -> None:
         await self.db.delete(user)
-
-    async def commit(self):
         await self.db.commit()

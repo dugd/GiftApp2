@@ -25,10 +25,18 @@ class RecipientRepository:
 
     async def add(self, recipient: Recipient) -> Recipient:
         self.db.add(recipient)
+        await self.db.commit()
         return recipient
 
     async def delete(self, recipient: Recipient) -> None:
         await self.db.delete(recipient)
+        await self.db.commit()
+
+    async def update(self, recipient: Recipient, data: dict) -> Recipient:
+        for key, value in data.items():
+            setattr(recipient, key, value)
+        await self.db.commit()
+        return recipient
 
     async def commit(self):
         await self.db.commit()

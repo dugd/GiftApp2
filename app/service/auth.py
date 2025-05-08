@@ -17,7 +17,6 @@ async def register_user(user_data: UserRegister, repo: UserRepository) -> UserMo
         hashed_password=hash_password(user_data.password),
     )
     await repo.add(user)
-    await repo.commit()
 
     return UserModel.model_validate(user)
 

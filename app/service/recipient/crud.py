@@ -22,9 +22,7 @@ async def recipient_update_info(recipient_id: UUID, user: UserModel, data: Recip
     recipient = await repo.get_by_id(recipient_id)
     if not RecipientPolicy(user).can_edit(RecipientModel.model_validate(recipient)):
         raise PolicyPermissionError("Forbidden to edit recipient")
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(recipient, key, value)
-    await repo.commit()
+    await repo.update(recipient, data.model_dump(exclude_unset=True))
     return RecipientModel.model_validate(recipient)
 
 
@@ -33,7 +31,7 @@ async def recipient_update_birthday(recipient_id: UUID, user: UserModel, data: R
     if not RecipientPolicy(user).can_edit(RecipientModel.model_validate(recipient)):
         raise PolicyPermissionError("Forbidden to edit recipient")
     recipient.birthday = data.birthday
-    await repo.commit()
+    await repo.update(recipient, {})
     return RecipientModel.model_validate(recipient)
 
 
@@ -41,7 +39,6 @@ async def recipient_delete(recipient_id: UUID, user: UserModel, repo: RecipientR
     recipient = await repo.get_by_id(recipient_id)
     if not RecipientPolicy(user).can_delete(RecipientModel.model_validate(recipient)):
         raise PolicyPermissionError("Forbidden to delete recipient")
-    await repo.delete(recipient)
     await repo.commit()
 
 

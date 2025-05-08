@@ -3,8 +3,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.exceptions import GiftAppError, NotFoundError
-from app.models import GiftIdea, User, SimpleUser, AdminUser
+from app.exceptions.exceptions import GiftAppError, NotFoundError, PolicyPermissionError
+from app.service.idea.policy import IdeaPolicy
+from app.models import GiftIdea, User, SimpleUser
 from app.schemas.idea import IdeaCreate, IdeaModel, IdeaUpdateInfo
 
 
@@ -13,10 +14,8 @@ class IdeaService:
         self.db = db
 
     async def create_idea(self, data: IdeaCreate, user: User) -> IdeaModel:
-        if isinstance(user, SimpleUser) and data.is_global:
-            raise GiftAppError("forbidden")
-        if isinstance(user, AdminUser) and not data.is_global:
-            raise GiftAppError("must be global for admins")
+        if not IdeaPolicy(user).can_create(data.is_global):
+            raise PolicyPermissionError("Forbidden to create recipient")
 
         idea = GiftIdea(**data.model_dump(), user_id=user.id)
         self.db.add(idea)
@@ -25,9 +24,8 @@ class IdeaService:
 
     async def update_idea_info(self, idea_id: UUID, data: IdeaUpdateInfo, user: User) -> IdeaModel:
         idea = await self.get_idea_by_id(idea_id, user)
-        if isinstance(user, SimpleUser):
-            if idea.is_global:
-                raise GiftAppError("forbidden to change global idea")
+        if not IdeaPolicy(user).can_edit(idea):
+            raise PolicyPermissionError("Forbidden to edit recipient")
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(idea, key, value)
         await self.db.commit()
@@ -35,17 +33,15 @@ class IdeaService:
 
     async def soft_delete_idea(self, idea_id: UUID, user: User):
         idea = await self.get_idea_by_id(idea_id, user)
-        if isinstance(user, SimpleUser):
-            if idea.is_global:
-                raise GiftAppError("forbidden to delete global idea")
+        if not IdeaPolicy(user).can_delete(idea):
+            raise PolicyPermissionError("Forbidden to delete recipient")
         idea.soft_delete()
         await self.db.commit()
 
     async def archive_idea(self, idea_id: UUID, user: User) -> IdeaModel:
         idea = await self.get_idea_by_id(idea_id, user)
-        if isinstance(user, SimpleUser):
-            if idea.is_global:
-                raise GiftAppError("forbidden to archive global idea")
+        if not IdeaPolicy(user).can_edit(idea):
+            raise PolicyPermissionError("Forbidden to edit recipient")
         idea.archive()
         await self.db.commit()
         return IdeaModel.model_validate(idea)
