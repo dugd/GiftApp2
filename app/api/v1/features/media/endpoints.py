@@ -5,13 +5,14 @@ from PIL import Image
 from fastapi import APIRouter, UploadFile, HTTPException, status
 
 from app.utils.media import calculate_hash
+from app.schemas.media import MediaFileData
 
 
 ALLOWED_MIME_TYPES = {"image/png", "image/jpeg"}
 MAX_FILE_SIZE = 5 * 1024 * 1024
 
 
-async def extract_image_data(file: UploadFile):
+async def extract_image_data(file: UploadFile) -> MediaFileData:
     filename = file.filename
     content_type = file.content_type
     if content_type not in ALLOWED_MIME_TYPES:
@@ -37,25 +38,25 @@ async def extract_image_data(file: UploadFile):
 
     file_hash = calculate_hash(file_bytes)
 
-    return {
-        "file_name": filename,
-        "mime_type": content_type,
-        "size_bytes": size_bytes,
-        "width": width,
-        "height": height,
-        "aspect_ratio": round(ratio, 3),
-        "hash": file_hash,
-    }
+    return MediaFileData(
+        filename=filename,
+        mime_type=content_type,
+        size_bytes=size_bytes,
+        width=width,
+        height=height,
+        ratio=ratio,
+        hash=file_hash,
+    )
 
 
-def validate_avatar_data(data: dict) -> bool:
-    if data["width"] != data["height"]:
+def validate_avatar_data(data: MediaFileData) -> bool:
+    if data.width != data.height:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Avatar height and width must be equal")
     return True
 
 
-def validate_content_data(data: dict) -> bool:
-    if 0.5 > data["aspect_ratio"] > 2:
+def validate_content_data(data: MediaFileData) -> bool:
+    if 0.5 > data.ratio > 2:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ratio must be between 0.5 and 2")
     return True
 
