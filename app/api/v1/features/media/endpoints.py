@@ -1,11 +1,13 @@
 from typing import List
 from io import BytesIO
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from fastapi import APIRouter, UploadFile, HTTPException, status
 
+from app.storage import S3MediaStorage
 from app.utils.media import calculate_hash
 from app.schemas.media import MediaFileData
+from app.service.media import MediaUploaderService, AvaMediaValidator
 
 
 ALLOWED_MIME_TYPES = {"image/png", "image/jpeg"}
@@ -30,7 +32,7 @@ async def extract_image_data(file: UploadFile) -> MediaFileData:
     try:
         image = Image.open(BytesIO(file_bytes))
         image.verify()
-    except Exception:
+    except UnidentifiedImageError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image file")
 
     width, height = image.size
@@ -49,18 +51,6 @@ async def extract_image_data(file: UploadFile) -> MediaFileData:
     )
 
 
-def validate_avatar_data(data: MediaFileData) -> bool:
-    if data.width != data.height:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Avatar height and width must be equal")
-    return True
-
-
-def validate_content_data(data: MediaFileData) -> bool:
-    if 0.5 > data.ratio > 2:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ratio must be between 0.5 and 2")
-    return True
-
-
 router = APIRouter(prefix="/media", tags=["media"])
 
 
@@ -68,7 +58,10 @@ router = APIRouter(prefix="/media", tags=["media"])
 async def upload_ava(file: UploadFile):
     """upload ava for user or recipient"""
     data = await extract_image_data(file)
-    validate_avatar_data(data)
+    file_bytes = await file.read()
+
+    uploader = MediaUploaderService(S3MediaStorage(), AvaMediaValidator())
+    await uploader.upload_one(file_bytes, data)
 
     return data
 
@@ -77,6 +70,4 @@ async def upload_ava(file: UploadFile):
 async def upload_content(files: List[UploadFile]):
     """upload media for idea or gifts"""
     datas = [await extract_image_data(file) for file in files]
-    for data in datas:
-        validate_content_data(data)
     return datas
