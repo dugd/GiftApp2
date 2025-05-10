@@ -50,7 +50,7 @@ class S3MediaStorage(MediaStorage):
 
     def delete(self, path: str):
         try:
-            self.s3_client.delete_obj(
+            self.s3_client.delete_object(
                 Bucket=settings.AWS_BUCKET_NAME,
                 Key=path,
             )

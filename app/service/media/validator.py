@@ -19,6 +19,6 @@ class AvaMediaValidator(BaseMediaValidator):
 
 class ContentMediaValidator(BaseMediaValidator):
     def validate(self, media_data: MediaFileData) -> bool:
-        if 0.5 > media_data.ratio > 2:
+        if 0.5 > media_data.ratio or media_data.ratio > 2:
             raise MediaValidateFailure("ratio must be between 0.5 and 2")
         return True

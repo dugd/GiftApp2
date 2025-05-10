@@ -42,7 +42,7 @@ class MediaUploaderService:
         self.validator.validate(media_data)
 
         existing_media = await self.repo.get_by_hash(media_data.hash)
-        if existing_media:
+        if existing_media and existing_media.type == _type.value:
             return existing_media
 
         _, ext = os.path.splitext(media_data.filename)
@@ -80,7 +80,7 @@ class MediaUploaderService:
                 self.validator.validate(media_data)
 
                 existing_media = await self.repo.get_by_hash(media_data.hash)
-                if existing_media:
+                if existing_media and existing_media.type == _type.value:
                     results.append(existing_media)
                     continue
 
@@ -106,7 +106,7 @@ class MediaUploaderService:
 
             results = await self.repo.add_many(results)
             return results
-        except RuntimeError as e:
+        except Exception as e:
             for path in uploaded_paths:
                 await run_in_threadpool(self.storage.delete, path)
             raise e
