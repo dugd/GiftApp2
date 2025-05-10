@@ -4,10 +4,14 @@ from io import BytesIO
 from PIL import Image, UnidentifiedImageError
 from fastapi import APIRouter, UploadFile, HTTPException, status
 
+from app.models import MediaType
+from app.repositories.media import MediaRepository
 from app.storage import S3MediaStorage
 from app.utils.media import calculate_hash
 from app.schemas.media import MediaFileData
 from app.service.media import MediaUploaderService, AvaMediaValidator
+from app.api.v1.dependencies import DBSessionDepends
+
 
 
 ALLOWED_MIME_TYPES = {"image/png", "image/jpeg"}
@@ -54,19 +58,22 @@ async def extract_image_data(file: UploadFile) -> MediaFileData:
 router = APIRouter(prefix="/media", tags=["media"])
 
 
-@router.post("/upload/avatar")
-async def upload_ava(file: UploadFile):
+@router.post("/upload/avatar", status_code=status.HTTP_201_CREATED)
+async def upload_ava(
+        file: UploadFile,
+        db: DBSessionDepends,
+):
     """upload ava for user or recipient"""
     data = await extract_image_data(file)
     file_bytes = await file.read()
 
-    uploader = MediaUploaderService(S3MediaStorage(), AvaMediaValidator())
-    await uploader.upload_one(file_bytes, data)
+    uploader = MediaUploaderService(MediaRepository(db), S3MediaStorage(), AvaMediaValidator())
+    media = await uploader.upload_one(file_bytes, data, MediaType.AVATAR)
 
-    return data
+    return media
 
 
-@router.post("/upload/content")
+@router.post("/upload/content", status_code=status.HTTP_201_CREATED)
 async def upload_content(files: List[UploadFile]):
     """upload media for idea or gifts"""
     datas = [await extract_image_data(file) for file in files]

@@ -12,7 +12,7 @@ class MediaType(Enum):
     CONTENT = "CONTENT"
 
 
-class MediaFile(Base, SurrogatePKMixin, TimestampMixin):
+class MediaFile(SurrogatePKMixin, TimestampMixin, Base):
     __tablename__ = "media_files"
 
     url: Mapped[str] = mapped_column(String, nullable=False, unique=True)
