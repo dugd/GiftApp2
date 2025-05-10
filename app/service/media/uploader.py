@@ -1,3 +1,6 @@
+import os
+import base64
+
 from fastapi.concurrency import run_in_threadpool
 
 from app.storage import MediaStorage
@@ -36,7 +39,10 @@ class MediaUploaderService:
         if existing_media:
             return existing_media
 
-        upload_path = f"{_type.value.lower()}/{media_data.hash}"
+        _, ext = os.path.splitext(media_data.filename)
+        decoded_hash = base64.urlsafe_b64encode(bytes.fromhex(media_data.hash)).rstrip(b"=").decode()
+        upload_path = f"{_type.value.lower()}/{decoded_hash}{ext}"
+
         url = await run_in_threadpool(self.storage.upload, file_bytes, upload_path, media_data.mime_type)
 
         media = MediaFile(
