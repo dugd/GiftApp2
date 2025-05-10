@@ -49,7 +49,13 @@ class S3MediaStorage(MediaStorage):
             raise RuntimeError(f"Error uploading file: {e}")
 
     def delete(self, path: str):
-        raise NotImplementedError()
+        try:
+            self.s3_client.delete_object(
+                Bucket=settings.AWS_BUCKET_NAME,
+                Key=path,
+            )
+        except (BotoCoreError, ClientError) as e:
+            raise RuntimeError(f"Error deleting file: {e}")
 
     def exists(self, path: str) -> bool:
         raise NotImplementedError()
