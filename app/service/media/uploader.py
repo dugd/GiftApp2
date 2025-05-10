@@ -33,6 +33,26 @@ class MediaUploaderService:
         self.storage = storage
         self.validator = validator
 
+    @staticmethod
+    def _build_upload_path(media_data: MediaFileData, _type: MediaType) -> str:
+        _, ext = os.path.splitext(media_data.filename)
+        decoded_hash = base64.urlsafe_b64encode(bytes.fromhex(media_data.hash)).rstrip(b"=").decode()
+        return f"{_type.value.lower()}/{decoded_hash}{ext}"
+
+    @staticmethod
+    def _create_media_model(url: str, media_data: MediaFileData, _type: MediaType) -> MediaFile:
+        return MediaFile(
+            url=url,
+            hash=media_data.hash,
+            type=MediaType.AVATAR.value,
+            alt=media_data.filename,
+            mime_type=media_data.mime_type,
+            size=media_data.size_bytes,
+            width=media_data.width,
+            height=media_data.height,
+            ratio=media_data.ratio,
+        )
+
     async def upload_one(
             self,
             file_bytes: bytes,
@@ -45,23 +65,11 @@ class MediaUploaderService:
         if existing_media and existing_media.type == _type.value:
             return existing_media
 
-        _, ext = os.path.splitext(media_data.filename)
-        decoded_hash = base64.urlsafe_b64encode(bytes.fromhex(media_data.hash)).rstrip(b"=").decode()
-        upload_path = f"{_type.value.lower()}/{decoded_hash}{ext}"
+        upload_path = self._build_upload_path(media_data, _type)
 
         url = await run_in_threadpool(self.storage.upload, file_bytes, upload_path, media_data.mime_type)
 
-        media = MediaFile(
-            url=url,
-            hash=media_data.hash,
-            type=MediaType.AVATAR.value,
-            alt=media_data.filename,
-            mime_type=media_data.mime_type,
-            size=media_data.size_bytes,
-            width=media_data.width,
-            height=media_data.height,
-            ratio=media_data.ratio,
-        )
+        media = self._create_media_model(url, media_data, _type)
         await self.repo.add(media)
 
         return media
@@ -75,33 +83,22 @@ class MediaUploaderService:
         results: List[MediaFile] = []
         uploaded_paths: List[str] = []
 
+        for media_data in datas:
+            self.validator.validate(media_data)
+
         try:
             for file_bytes, media_data in zip(files, datas):
-                self.validator.validate(media_data)
-
                 existing_media = await self.repo.get_by_hash(media_data.hash)
                 if existing_media and existing_media.type == _type.value:
                     results.append(existing_media)
                     continue
 
-                _, ext = os.path.splitext(media_data.filename)
-                decoded_hash = base64.urlsafe_b64encode(bytes.fromhex(media_data.hash)).rstrip(b"=").decode()
-                upload_path = f"{_type.value.lower()}/{decoded_hash}{ext}"
-
-                url = await run_in_threadpool(self.storage.upload, file_bytes, upload_path, media_data.mime_type)
+                upload_path = self._build_upload_path(media_data, _type)
                 uploaded_paths.append(upload_path)
 
-                media = MediaFile(
-                    url=url,
-                    hash=media_data.hash,
-                    type=_type.value,
-                    alt=media_data.filename,
-                    mime_type=media_data.mime_type,
-                    size=media_data.size_bytes,
-                    width=media_data.width,
-                    height=media_data.height,
-                    ratio=media_data.ratio,
-                )
+                url = await run_in_threadpool(self.storage.upload, file_bytes, upload_path, media_data.mime_type)
+
+                media = self._create_media_model(url, media_data, _type)
                 results.append(media)
 
             results = await self.repo.add_many(results)
