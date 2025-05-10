@@ -4,10 +4,17 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_session
+from app.core.database import async_session
+from app.repositories.user import UserRepository
 from app.schemas.user import UserModel
 from app.service.user import get_user_by_id
+from app.exceptions.exceptions import NotFoundError
 from app.api.v1.features.auth.dependencies import access_token_scheme
+
+
+async def get_session():
+    async with async_session() as session:
+        yield session
 
 
 async def get_token_payload(
@@ -25,11 +32,10 @@ async def get_token_payload(
 async def get_current_user(
         db: AsyncSession = Depends(get_session),
         token_payload: dict = Depends(get_token_payload)) -> UserModel:
-    async with db.begin():
-        user = await get_user_by_id(token_payload["id"], db)
-
-        if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    try:
+        user = await get_user_by_id(token_payload["id"], UserRepository(db))
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
     return user
 

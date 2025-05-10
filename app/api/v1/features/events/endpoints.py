@@ -3,7 +3,6 @@ from datetime import date
 from fastapi import APIRouter, status, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_session
 from app.models import User, SimpleUser, AdminUser, UserRole, Event
 from app.exceptions.event.exceptions import PastEventError
 from app.service.event import event_create, event_update_info, event_delete, get_event, get_event_list, \
@@ -12,7 +11,7 @@ from app.schemas.event import (
     EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
     EventNext, CalendarView, EventOccurrenceModel
 )
-from app.api.v1.dependencies import get_current_user, RoleChecker
+from app.api.v1.dependencies import RoleChecker, DBSessionDepends, CurrentUserDepends
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -31,8 +30,8 @@ async def get_event_or_404(
 
 @router.get("/", response_model=list[EventFull])
 async def index(
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
 ):
     """Get all (global and user`s) next planned events"""
     events = await get_event_list(user, db, with_occurrence=True)
@@ -46,10 +45,10 @@ async def index(
 
 @router.get("/occurrences", response_model=OccurrencesView)
 async def index_occurrences(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         from_date: date,
         to_date: date,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """
     Fetches and processes occurrences of events within a specified date range. This function queries the models for
@@ -70,7 +69,7 @@ async def index_occurrences(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(RoleChecker(UserRole.ROOT.value))])
 async def manual_generate(
-        db: AsyncSession = Depends(get_session),
+        db: DBSessionDepends,
 ):
         created = await generate_missing_occurrences(db)
         return {"created": created}
@@ -78,10 +77,10 @@ async def manual_generate(
 
 @router.get("/calendar", response_model=CalendarView)
 async def calendar_view(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         from_date: date,
         to_date: date,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """Return calendar-style view: occurrences grouped by date."""
     events = await get_event_list(user, db, with_occurrence=True)
@@ -99,9 +98,9 @@ async def calendar_view(
 
 @router.post("/", response_model=EventModel, status_code=status.HTTP_201_CREATED)
 async def create(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         event_data: EventCreate,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """Create new event"""
     if isinstance(user, SimpleUser):
@@ -123,9 +122,9 @@ async def create(
 
 @router.get("/{event_id}", response_model=EventFull)
 async def get(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         event_id: UUID,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """Get event"""
     event = await get_event_or_404(event_id, user, db, with_occurrence=True)
@@ -137,9 +136,9 @@ async def get(
 
 @router.get("/{event_id}/info", response_model=EventModel)
 async def get_info(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         event_id: UUID,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """Get event info"""
     event = await get_event_or_404(event_id, user, db, with_occurrence=False)
@@ -148,9 +147,9 @@ async def get_info(
 
 @router.get("/{event_id}/next", response_model=EventNext)
 async def get_next(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         event_id: UUID,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """Get event with next occurrence"""
     event = await get_event_or_404(event_id, user, db)
@@ -163,10 +162,10 @@ async def get_next(
 
 @router.patch("/{event_id}", response_model=EventModel, status_code=status.HTTP_202_ACCEPTED)
 async def update_info(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         event_id: UUID,
         data: EventUpdate,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """update title, type fields"""
     event = await get_event_or_404(event_id, user, db, with_occurrence=False)
@@ -180,9 +179,9 @@ async def update_info(
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         event_id: UUID,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """delete event (set to inactive)"""
     event = await get_event_or_404(event_id, user, db, with_occurrence=False)
@@ -196,11 +195,11 @@ async def delete(
 @router.get(
     "/{event_id}/occurrences", response_model=list[EventOccurrenceId])
 async def get_occurrences(
+        user: CurrentUserDepends,
+        db: DBSessionDepends,
         event_id: UUID,
         from_date: date,
         to_date: date,
-        user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_session),
 ):
     """Get event occurrences in date interval"""
     event = await get_event_or_404(event_id, user, db, with_occurrence=True)
