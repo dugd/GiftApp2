@@ -5,14 +5,14 @@ from fastapi import UploadFile, HTTPException, status
 from PIL import Image, UnidentifiedImageError
 
 from app.utils.media import calculate_hash
-from app.schemas.media import MediaFileData
+from app.schemas.media import MediaFileMeta
 
 
 ALLOWED_MIME_TYPES = {"image/png", "image/jpeg"}
 MAX_FILE_SIZE = 5 * 1024 * 1024
 
 
-async def extract_image_data(file: UploadFile) -> tuple[MediaFileData, bytes]:
+async def extract_image_data(file: UploadFile) -> tuple[MediaFileMeta, bytes]:
     filename = file.filename
     content_type = file.content_type
     if content_type not in ALLOWED_MIME_TYPES:
@@ -34,7 +34,7 @@ async def extract_image_data(file: UploadFile) -> tuple[MediaFileData, bytes]:
 
     file_hash = calculate_hash(file_bytes)
 
-    return MediaFileData(
+    return MediaFileMeta(
         filename=filename,
         mime_type=content_type,
         size_bytes=size_bytes,
@@ -45,7 +45,7 @@ async def extract_image_data(file: UploadFile) -> tuple[MediaFileData, bytes]:
     ), file_bytes
 
 
-async def extract_images_data(files: List[UploadFile]) -> tuple[List[MediaFileData], List[bytes]]:
+async def extract_images_data(files: List[UploadFile]) -> tuple[List[MediaFileMeta], List[bytes]]:
     datas = []
     bytes_list = []
     for file in files:

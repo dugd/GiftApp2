@@ -5,7 +5,7 @@ import base64
 from fastapi.concurrency import run_in_threadpool
 
 from app.storage import MediaStorage
-from app.schemas.media import MediaFileData
+from app.schemas.media import MediaFileMeta, MediaFileModel
 from app.service.media.validator import BaseMediaValidator
 from app.models import MediaFile, MediaType
 from app.repositories.media import MediaRepository
@@ -34,13 +34,13 @@ class MediaUploaderService:
         self.validator = validator
 
     @staticmethod
-    def _build_upload_path(media_data: MediaFileData, _type: MediaType) -> str:
+    def _build_upload_path(media_data: MediaFileMeta, _type: MediaType) -> str:
         _, ext = os.path.splitext(media_data.filename)
         decoded_hash = base64.urlsafe_b64encode(bytes.fromhex(media_data.hash)).rstrip(b"=").decode()
         return f"{_type.value.lower()}/{decoded_hash}{ext}"
 
     @staticmethod
-    def _create_media_model(url: str, media_data: MediaFileData, _type: MediaType) -> MediaFile:
+    def _create_media_model(url: str, media_data: MediaFileMeta, _type: MediaType) -> MediaFile:
         return MediaFile(
             url=url,
             hash=media_data.hash,
@@ -56,14 +56,14 @@ class MediaUploaderService:
     async def upload_one(
             self,
             file_bytes: bytes,
-            media_data: MediaFileData,
+            media_data: MediaFileMeta,
             _type: MediaType
-    ) -> MediaFile:
+    ) -> MediaFileModel:
         self.validator.validate(media_data)
 
         existing_media = await self.repo.get_by_hash(media_data.hash)
         if existing_media and existing_media.type == _type.value:
-            return existing_media
+            return MediaFileModel.model_validate(existing_media)
 
         upload_path = self._build_upload_path(media_data, _type)
 
@@ -72,14 +72,14 @@ class MediaUploaderService:
         media = self._create_media_model(url, media_data, _type)
         await self.repo.add(media)
 
-        return media
+        return MediaFileModel.model_validate(media)
 
     async def upload_many(
             self,
             files: List[bytes],
-            datas: List[MediaFileData],
+            datas: List[MediaFileMeta],
             _type: MediaType
-    ) -> List[MediaFile]:
+    ) -> List[MediaFileModel]:
         results: List[MediaFile] = []
         uploaded_paths: List[str] = []
 
@@ -102,7 +102,7 @@ class MediaUploaderService:
                 results.append(media)
 
             results = await self.repo.add_many(results)
-            return results
+            return [MediaFileModel.model_validate(media) for media in results]
         except Exception as e:
             for path in uploaded_paths:
                 await run_in_threadpool(self.storage.delete, path)
