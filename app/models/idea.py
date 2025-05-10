@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from .auth import User
 
 
-class GiftIdea(Base, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin):
+class GiftIdea(SurrogatePKMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "gift_ideas"
 
     title: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -33,5 +33,5 @@ class GiftIdea(Base, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin):
 
     user: Mapped["User"] = relationship(
         "User",
-        back_populates="schemas",
+        back_populates="ideas",
     )
