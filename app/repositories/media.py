@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import List, Sequence
 from uuid import UUID
 
 from sqlalchemy import select
@@ -13,6 +13,11 @@ class MediaRepository:
 
     async def add(self, media: MediaFile) -> MediaFile:
         self.db.add(media)
+        await self.db.commit()
+        return media
+
+    async def add_many(self, media: List[MediaFile]) -> List[MediaFile]:
+        self.db.add_all(media)
         await self.db.commit()
         return media
 

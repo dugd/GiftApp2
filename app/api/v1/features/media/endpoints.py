@@ -6,7 +6,7 @@ from app.models import MediaType
 from app.repositories.media import MediaRepository
 from app.schemas.media import MediaFileData
 from app.storage import S3MediaStorage
-from app.service.media import MediaUploaderService, AvaMediaValidator
+from app.service.media import MediaUploaderService, AvaMediaValidator, ContentMediaValidator
 from app.api.v1.dependencies import DBSessionDepends
 from app.api.v1.features.media.dependencies import extract_image_data
 
@@ -30,7 +30,14 @@ async def upload_ava(
 
 
 @router.post("/upload/content", status_code=status.HTTP_201_CREATED)
-async def upload_content(files: List[UploadFile]):
+async def upload_content(
+        db: DBSessionDepends,
+        files: List[UploadFile],
+):
     """upload media for idea or gifts"""
     datas = [await extract_image_data(file) for file in files]
-    return datas
+    file_bytes_list = [await file.read() for file in files]
+
+    uploader = MediaUploaderService(MediaRepository(db), S3MediaStorage(), ContentMediaValidator())
+    media = await uploader.upload_many(file_bytes_list, datas, MediaType.CONTENT)
+    return media
