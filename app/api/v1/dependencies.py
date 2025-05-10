@@ -4,10 +4,15 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_session
+from app.core.database import async_session
 from app.schemas.user import UserModel
 from app.service.user import get_user_by_id
 from app.api.v1.features.auth.dependencies import access_token_scheme
+
+
+async def get_session():
+    async with async_session() as session:
+        yield session
 
 
 async def get_token_payload(
