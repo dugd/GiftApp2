@@ -3,19 +3,45 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 import app.service.auth as auth_service
 import app.service.user as user_service
+from app.core.enums import UserRole
 from app.repositories.orm.user import UserRepository
 from app.schemas.auth import UserRegister, TokenPair
 from app.schemas.user import UserRead
-from app.api.v1.dependencies import DBSessionDepends, get_token_payload
+from app.api.v1.dependencies import DBSessionDepends, RoleChecker, get_token_payload
 from .dependencies import refresh_token_scheme
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+# TODO: Register confirm
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register(db: DBSessionDepends, user_data: UserRegister):
     user = await auth_service.register_user(user_data, UserRepository(db))
     return UserRead(**user.model_dump())
+
+
+@router.post(
+    "/register-admin",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RoleChecker(UserRole.ROOT.value))]
+)
+async def register_admin():
+    ...
+
+@router.post("/register/activate")
+async def confirm(token: str):
+    ...
+
+
+@router.post("/reset-password")
+async def reset_password():
+    ...
+
+
+@router.post("/reset-password/confirm")
+async def confirm_reset():
+    ...
 
 
 @router.post("/login", response_model=TokenPair)

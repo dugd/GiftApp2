@@ -17,4 +17,8 @@ class Settings(BaseSettings):
     AWS_REGION: str = "eu-central-1"
     AWS_BUCKET_NAME: str
 
+    MAIL_SENDGRID_API_KEY: str
+    MAIL_SENDER_EMAIL: str
+
+
 settings = Settings()
