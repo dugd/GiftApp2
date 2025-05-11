@@ -22,7 +22,14 @@ class AbstractRepository(ABC, Generic[T]):
             ...
 
         @abstractmethod
-        async def list(self) -> List[T]:
+        async def list(
+                self,
+                skip: int = 0,
+                limit: int = 100,
+                order_by: Optional[str] = None,
+                desc_order: bool = False,
+                **filters: Any,
+        ) -> List[T]:
             """Get list of entities"""
             ...
 

@@ -1,6 +1,6 @@
 from typing import Type, Any, Optional, List, Dict
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.abstract.base import AbstractRepository, T
@@ -29,8 +29,38 @@ class SQLAlchemyRepository(AbstractRepository[T]):
         await self._session.flush()
         await self._session.commit()
 
-    async def list(self) -> List[T]:
+    async def list(
+            self,
+            skip: int = 0,
+            limit: int = 100,
+            order_by: Optional[str] = None,
+            desc_order: bool = False,
+            **filters: Any,
+        ) -> List[T]:
         stmt = select(self._model)
+
+        for attr, value in filters.items():
+            column = getattr(self._model, attr, None)
+            if column is None:
+                continue
+            if isinstance(value, list):
+                stmt = stmt.where(column.in_(value))
+            else:
+                stmt = stmt.where(column == value)
+
+        if order_by:
+            column = getattr(self._model, order_by, None)
+            if column is not None:
+                if desc_order:
+                    stmt = stmt.order_by(desc(column))
+                else:
+                    stmt = stmt.order_by(column)
+
+
+        stmt = stmt.offset(skip)
+        if limit > 0:
+            stmt = stmt.limit(limit)
+
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
