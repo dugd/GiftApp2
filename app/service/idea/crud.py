@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.exceptions import GiftAppError, NotFoundError, PolicyPermissionError
+from app.exceptions.common import GiftAppError, NotFoundError, PolicyPermissionError
 from app.service.idea.policy import IdeaPolicy
 from app.models import GiftIdea, User, SimpleUser
 from app.schemas.idea import IdeaCreate, IdeaModel, IdeaUpdateInfo

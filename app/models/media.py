@@ -1,15 +1,9 @@
-from enum import Enum
-
 from sqlalchemy import String, Integer, Float
 from sqlalchemy.orm import mapped_column, Mapped, validates
 
+from app.core.enums import MediaType
 from app.core.models.base import Base
 from app.core.models.mixins import SurrogatePKMixin, TimestampMixin
-
-
-class MediaType(Enum):
-    AVATAR = "AVATAR"
-    CONTENT = "CONTENT"
 
 
 class MediaFile(SurrogatePKMixin, TimestampMixin, Base):

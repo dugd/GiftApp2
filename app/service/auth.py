@@ -1,10 +1,10 @@
-from app.repositories.user import UserRepository
+from app.repositories.orm.user import UserRepository
 from app.models import SimpleUser
 from app.schemas.user import UserModel
 from app.utils.security import (
     hash_password, verify_password, create_access_token, create_refresh_token
 )
-from app.exceptions.auth.exceptions import EmailAlreadyTaken, WrongCredentials
+from app.exceptions.auth import EmailAlreadyTaken, WrongCredentials
 from app.schemas.auth import UserRegister, TokenPair
 
 
@@ -30,7 +30,7 @@ async def authenticate_user(email: str, password: str, repo: UserRepository) -> 
 
 def create_token_pair(user: UserModel) -> TokenPair:
     new_access_token = create_access_token(
-        payload={"id": user.id.hex, "sub": user.email, "role": user.role, "type": "access"})
+        payload={"id": user.id.hex, "sub": user.email, "role": user.role.value, "type": "access"})
     new_refresh_token = create_refresh_token(payload={"id": user.id.hex, "type": "refresh"})
 
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)

@@ -7,8 +7,9 @@ from fastapi.concurrency import run_in_threadpool
 from app.storage import MediaStorage
 from app.schemas.media import MediaFileMeta, MediaFileModel
 from app.service.media.validator import BaseMediaValidator
-from app.models import MediaFile, MediaType
-from app.repositories.media import MediaRepository
+from app.models import MediaFile
+from app.core.enums import MediaType
+from app.repositories.orm.media import MediaRepository
 
 
 class MediaUploaderService:

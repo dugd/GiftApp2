@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
 
-from app.models import MediaType
+from app.core.enums import MediaType
 
 
 class MediaFileMeta(BaseModel):

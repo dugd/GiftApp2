@@ -1,8 +1,9 @@
 from uuid import UUID
 from fastapi import APIRouter, status, Depends
 
-from app.models import UserRole
+from app.core.enums import UserRole
 import app.service.recipient as recipient_service
+from app.repositories.orm.recipient import RecipientRepository
 from app.schemas.recipient import RecipientCreate, RecipientModel, RecipientUpdateInfo, \
     RecipientUpdateBirthday
 from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends, RoleChecker
@@ -16,7 +17,7 @@ async def index(
         user: CurrentUserDepends,
 ):
     """Get list of recipients"""
-    recipients = await recipient_service.get_recipient_list(user, db)
+    recipients = await recipient_service.get_recipient_list(user, RecipientRepository(db))
 
     return recipients
 
@@ -28,7 +29,7 @@ async def get(
         recipient_id: UUID,
 ):
     """Get recipient by ID"""
-    recipient = await recipient_service.get_recipient(recipient_id, db)
+    recipient = await recipient_service.get_recipient(recipient_id, user, RecipientRepository(db))
     return recipient
 
 
@@ -42,7 +43,7 @@ async def create(
         data: RecipientCreate,
 ):
     """Create new recipient"""
-    recipient = await recipient_service.recipient_create(data, user.id, db)
+    recipient = await recipient_service.recipient_create(data, user, RecipientRepository(db))
 
     return recipient
 
@@ -55,7 +56,7 @@ async def update_info(
         data: RecipientUpdateInfo,
 ):
     """Update recipient info"""
-    updated = await recipient_service.recipient_update_info(recipient_id, data, db)
+    updated = await recipient_service.recipient_update_info(recipient_id, user, data, RecipientRepository(db))
 
     return updated
 
@@ -68,7 +69,7 @@ async def set_birthday(
         data: RecipientUpdateBirthday,
 ):
     """Set birthday for recipient"""
-    updated = await recipient_service.recipient_update_birthday(recipient_id, data, db)
+    updated = await recipient_service.recipient_update_birthday(recipient_id, user, data, RecipientRepository(db))
 
     return updated
 
@@ -80,4 +81,4 @@ async def delete(
         recipient_id: UUID,
 ):
     """Delete recipient"""
-    await recipient_service.recipient_delete(recipient_id, db)
+    await recipient_service.recipient_delete(recipient_id, user, RecipientRepository(db))

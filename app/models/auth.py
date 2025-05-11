@@ -1,23 +1,16 @@
 from typing import List, TYPE_CHECKING
-from enum import Enum
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
 from app.core.models.mixins import TimestampMixin, SurrogatePKMixin
 from app.core.models.base import Base
-
+from app.core.enums import UserRole
 
 if TYPE_CHECKING:
     from .recipient import Recipient
     from .event import Event
     from .idea import GiftIdea
-
-
-class UserRole(Enum):
-    ROOT = "ROOT"
-    ADMIN = "ADMIN"
-    USER = "USER"
 
 
 class User(SurrogatePKMixin, TimestampMixin, Base):

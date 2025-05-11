@@ -7,7 +7,7 @@ from starlette.responses import JSONResponse
 from app.core.config import settings
 from app.sсheduler import scheduler, run_generate_occur
 from app.api.v1.router import api_router
-from app.exceptions.exceptions import GiftAppError
+from app.exceptions import GiftAppError
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):

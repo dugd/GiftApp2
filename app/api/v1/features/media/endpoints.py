@@ -2,8 +2,8 @@ from typing import List
 
 from fastapi import APIRouter, UploadFile, status, Depends
 
-from app.models import MediaType
-from app.repositories.media import MediaRepository
+from app.core.enums import MediaType
+from app.repositories.orm.media import MediaRepository
 from app.schemas.media import MediaFileMeta, MediaFileRead
 from app.storage import S3MediaStorage
 from app.service.media import MediaUploaderService, AvaMediaValidator, ContentMediaValidator

@@ -1,4 +1,4 @@
-from app.exceptions.exceptions import GiftAppError
+from .common import GiftAppError
 
 
 class MediaValidateFailure(GiftAppError):
