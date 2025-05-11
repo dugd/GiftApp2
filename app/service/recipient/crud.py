@@ -2,8 +2,9 @@ from uuid import UUID
 from typing import Sequence
 
 from app.service.recipient.policy import RecipientPolicy
-from app.repositories.recipient import RecipientRepository
-from app.models import Recipient, UserRole
+from app.repositories.orm.recipient import RecipientRepository
+from app.models import Recipient
+from app.core.enums import UserRole
 from app.exceptions.exceptions import NotFoundError, PolicyPermissionError
 from app.schemas.recipient import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday, RecipientModel
 from app.schemas.user import UserModel

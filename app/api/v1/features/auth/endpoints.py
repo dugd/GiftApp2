@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 import app.service.auth as auth_service
 import app.service.user as user_service
-from app.repositories.user import UserRepository
+from app.repositories.orm.user import UserRepository
 from app.schemas.auth import UserRegister, TokenPair
 from app.schemas.user import UserModel
 from app.api.v1.dependencies import CurrentUserDepends, DBSessionDepends

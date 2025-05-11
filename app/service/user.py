@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.repositories.user import UserRepository
+from app.repositories.orm.user import UserRepository
 from app.exceptions.exceptions import NotFoundError
 from app.schemas.user import UserModel
 

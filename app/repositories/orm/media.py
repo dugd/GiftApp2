@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.repositories.orm import SQLAlchemyRepository
+from app.repositories.orm.base import SQLAlchemyRepository
 from app.models.media import MediaFile
 
 

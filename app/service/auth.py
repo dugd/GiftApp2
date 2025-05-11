@@ -1,4 +1,4 @@
-from app.repositories.user import UserRepository
+from app.repositories.orm.user import UserRepository
 from app.models import SimpleUser
 from app.schemas.user import UserModel
 from app.utils.security import (

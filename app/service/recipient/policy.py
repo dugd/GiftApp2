@@ -1,4 +1,4 @@
-from app.models import UserRole
+from app.core.enums import UserRole
 from app.schemas.recipient import RecipientModel
 from app.schemas.user import UserModel
 

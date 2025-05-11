@@ -1,9 +1,9 @@
 from uuid import UUID
 from fastapi import APIRouter, status, Depends
 
-from app.models import UserRole
+from app.core.enums import UserRole
 import app.service.recipient as recipient_service
-from app.repositories.recipient import RecipientRepository
+from app.repositories.orm.recipient import RecipientRepository
 from app.schemas.recipient import RecipientCreate, RecipientModel, RecipientUpdateInfo, \
     RecipientUpdateBirthday
 from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends, RoleChecker

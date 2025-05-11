@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Recipient
-from app.repositories.orm import SQLAlchemyRepository
+from app.repositories.orm.base import SQLAlchemyRepository
 
 
 class RecipientRepository(SQLAlchemyRepository[Recipient]):

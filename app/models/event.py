@@ -1,24 +1,17 @@
 from typing import TYPE_CHECKING, List, Optional
 from datetime import date
-from enum import Enum
 from uuid import UUID
 
-from sqlalchemy import Integer, String, Date, ForeignKey, CheckConstraint, Boolean
+from sqlalchemy import String, Date, ForeignKey, CheckConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
 from app.core.models.base import Base
 from app.core.models.mixins import GUID, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin
-
+from app.core.enums import EventType
 
 if TYPE_CHECKING:
     from .auth import User
     from .recipient import Recipient
-
-class EventType(Enum):
-    BIRTHDAY = "BIRTHDAY"
-    ANNIVERSARY = "ANNIVERSARY"
-    HOLIDAY = "HOLIDAY"
-    OTHER = "OTHER"
 
 
 class Event(SurrogatePKMixin, TimestampMixin, SoftDeleteMixin, Base):

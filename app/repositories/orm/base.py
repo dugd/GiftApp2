@@ -3,7 +3,7 @@ from typing import Type, Any, Optional, List, Dict
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.repositories.base import AbstractRepository, T
+from app.repositories.abstract.base import AbstractRepository, T
 
 
 class SQLAlchemyRepository(AbstractRepository[T]):

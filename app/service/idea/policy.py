@@ -1,4 +1,4 @@
-from app.models.auth import UserRole
+from app.core.enums import UserRole
 from app.schemas.user import UserModel
 from app.schemas.idea import IdeaModel
 
