@@ -8,7 +8,7 @@ from app.core.database import async_session
 from app.repositories.orm.user import UserRepository
 from app.schemas.user import UserModel
 from app.service.user import get_user_by_id
-from app.exceptions.exceptions import NotFoundError
+from app.exceptions.common import NotFoundError
 from app.api.v1.features.auth.dependencies import access_token_scheme
 
 

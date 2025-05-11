@@ -5,7 +5,7 @@ from app.service.recipient.policy import RecipientPolicy
 from app.repositories.orm.recipient import RecipientRepository
 from app.models import Recipient
 from app.core.enums import UserRole
-from app.exceptions.exceptions import NotFoundError, PolicyPermissionError
+from app.exceptions.common import NotFoundError, PolicyPermissionError
 from app.schemas.recipient import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday, RecipientModel
 from app.schemas.user import UserModel
 

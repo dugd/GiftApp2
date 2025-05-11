@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.exceptions.media.exceptions import MediaValidateFailure
+from app.exceptions.media import MediaValidateFailure
 from app.schemas.media import MediaFileMeta
 
 

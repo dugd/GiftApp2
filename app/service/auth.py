@@ -4,7 +4,7 @@ from app.schemas.user import UserModel
 from app.utils.security import (
     hash_password, verify_password, create_access_token, create_refresh_token
 )
-from app.exceptions.auth.exceptions import EmailAlreadyTaken, WrongCredentials
+from app.exceptions.auth import EmailAlreadyTaken, WrongCredentials
 from app.schemas.auth import UserRegister, TokenPair
 
 

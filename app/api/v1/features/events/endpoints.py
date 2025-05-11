@@ -4,7 +4,7 @@ from fastapi import APIRouter, status, Depends, HTTPException
 
 from app.models import SimpleUser, AdminUser
 from app.core.enums import UserRole
-from app.exceptions.event.exceptions import PastEventError
+from app.exceptions.event import PastEventError
 from app.service.event import event_create, event_update_info, event_delete, get_event, get_event_list, \
     get_next_occurrence, generate_missing_occurrences
 from app.schemas.event import (
