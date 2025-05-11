@@ -1,39 +1,15 @@
-from uuid import UUID
-from typing import Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.repositories.orm import SQLAlchemyRepository
 from app.models import User
 
 
-class UserRepository:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-
-    async def get_by_id(self, user_id: UUID) -> User | None:
-        stmt = select(User).where(User.id == user_id)
-        result = await self.db.execute(stmt)
-        return result.scalar_one_or_none()
+class UserRepository(SQLAlchemyRepository[User]):
+    def __init__(self, session: AsyncSession):
+        super().__init__(User, session)
 
     async def get_by_email(self, email: str) -> User | None:
-        stmt = select(User).where(User.email == email)
-        result = await self.db.execute(stmt)
+        stmt = select(self._model).where(self._model.email == email)
+        result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
-
-    async def get_all(self) -> Sequence[User]:
-        result = await self.db.execute(select(User))
-        return result.scalars().all()
-
-    async def add(self, user: User) -> User:
-        self.db.add(user)
-        await self.db.commit()
-        return user
-
-    async def update(self, user: User, data: dict) -> User:
-        for key, value in data.items():
-            setattr(user, key, value)
-        await self.db.commit()
-        return user
-
-    async def delete(self, user: User) -> None:
-        await self.db.delete(user)
-        await self.db.commit()
