@@ -31,9 +31,10 @@ class MediaFileBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class MediaFileRead(MediaFileBase):
+class MediaFileModel(MediaFileBase):
     id: UUID
 
 
-class MediaFileModel(MediaFileBase):
+
+class MediaFileRead(MediaFileBase):
     id: UUID

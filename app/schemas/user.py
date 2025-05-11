@@ -17,6 +17,7 @@ class UserModel(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+
 class UserRead(BaseModel):
     id: UUID
     email: EmailStr
