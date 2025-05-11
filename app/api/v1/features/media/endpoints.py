@@ -8,7 +8,7 @@ from app.schemas.media import MediaFileMeta, MediaFileRead
 from app.storage import S3MediaStorage
 from app.service.media import MediaUploaderService, AvaMediaValidator, ContentMediaValidator
 from app.api.v1.dependencies import DBSessionDepends
-from app.api.v1.features.media.dependencies import extract_image_data, extract_images_data
+from .dependencies import extract_image_data, extract_images_data
 
 
 router = APIRouter(prefix="/media", tags=["media"])

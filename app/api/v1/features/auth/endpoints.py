@@ -7,7 +7,7 @@ from app.repositories.orm.user import UserRepository
 from app.schemas.auth import UserRegister, TokenPair
 from app.schemas.user import UserModel
 from app.api.v1.dependencies import CurrentUserDepends, DBSessionDepends
-from app.api.v1.features.auth.dependencies import refresh_token_scheme
+from .dependencies import refresh_token_scheme
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
