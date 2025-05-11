@@ -1,9 +1,8 @@
 from uuid import UUID
 from datetime import date
 from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import User, SimpleUser, AdminUser, UserRole, Event
+from app.models import SimpleUser, AdminUser, UserRole
 from app.exceptions.event.exceptions import PastEventError
 from app.service.event import event_create, event_update_info, event_delete, get_event, get_event_list, \
     get_next_occurrence, generate_missing_occurrences
@@ -14,18 +13,6 @@ from app.schemas.event import (
 from app.api.v1.dependencies import RoleChecker, DBSessionDepends, CurrentUserDepends
 
 router = APIRouter(prefix="/events", tags=["events"])
-
-
-async def get_event_or_404(
-        event_id: UUID,
-        user: User,
-        db: AsyncSession,
-        with_occurrence: bool = False,
-) -> Event:
-    """Fetch an event by ID with user-specific access control, or raise 404."""
-    event = await get_event(event_id, user, db, with_occurrence=with_occurrence)
-
-    return event
 
 
 @router.get("/", response_model=list[EventFull])
@@ -127,7 +114,7 @@ async def get(
         event_id: UUID,
 ):
     """Get event"""
-    event = await get_event_or_404(event_id, user, db, with_occurrence=True)
+    event = await get_event(event_id, user, db, with_occurrence=True)
 
     event_full = EventFull.model_validate(event)
 
@@ -141,7 +128,7 @@ async def get_info(
         event_id: UUID,
 ):
     """Get event info"""
-    event = await get_event_or_404(event_id, user, db, with_occurrence=False)
+    event = await get_event(event_id, user, db, with_occurrence=False)
 
     return EventModel.model_validate(event)
 
@@ -152,7 +139,7 @@ async def get_next(
         event_id: UUID,
 ):
     """Get event with next occurrence"""
-    event = await get_event_or_404(event_id, user, db)
+    event = await get_event(event_id, user, db, with_occurrence=False)
     occurrence = await get_next_occurrence(event_id, db)
 
     response = EventNext.model_validate(event)
@@ -168,7 +155,7 @@ async def update_info(
         data: EventUpdate,
 ):
     """update title, type fields"""
-    event = await get_event_or_404(event_id, user, db, with_occurrence=False)
+    event = await get_event(event_id, user, db, with_occurrence=False)
     if isinstance(user, SimpleUser):
         if event.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to change global event")
@@ -184,7 +171,7 @@ async def delete(
         event_id: UUID,
 ):
     """delete event (set to inactive)"""
-    event = await get_event_or_404(event_id, user, db, with_occurrence=False)
+    event = await get_event(event_id, user, db, with_occurrence=False)
     if isinstance(user, SimpleUser):
         if event.is_global:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden to delete global event")
@@ -202,7 +189,7 @@ async def get_occurrences(
         to_date: date,
 ):
     """Get event occurrences in date interval"""
-    event = await get_event_or_404(event_id, user, db, with_occurrence=True)
+    event = await get_event(event_id, user, db, with_occurrence=True)
 
     response = [EventOccurrenceId.model_validate(occur) for occur in event.occurrences]
 
