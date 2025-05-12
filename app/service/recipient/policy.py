@@ -1,10 +1,10 @@
 from app.core.enums import UserRole
 from app.schemas.recipient import RecipientModel
-from app.schemas.user import UserModel
+from app.schemas.user import UserBase
 
 
 class RecipientPolicy:
-    def __init__(self, user: UserModel):
+    def __init__(self, user: UserBase):
         self.user = user
 
     def _is_admin(self) -> bool:

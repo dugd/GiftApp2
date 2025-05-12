@@ -1,23 +1,29 @@
+from uuid import UUID
+
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from jose import ExpiredSignatureError, JWTError
+
+from app.exceptions.auth import UserAlreadyActivated
 import app.service.auth as auth_service
 import app.service.user as user_service
 from app.core.enums import UserRole
+from app.mail import SendgridMailSender
 from app.repositories.orm.user import UserRepository
 from app.schemas.auth import UserRegister, TokenPair
 from app.schemas.user import UserRead
 from app.api.v1.dependencies import DBSessionDepends, RoleChecker, get_token_payload
+from app.utils.security import decode_token
 from .dependencies import refresh_token_scheme
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-# TODO: Register confirm
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(db: DBSessionDepends, user_data: UserRegister):
-    user = await auth_service.register_user(user_data, UserRepository(db))
-    return UserRead(**user.model_dump())
+    user = await auth_service.register_user(user_data, UserRepository(db), SendgridMailSender())
+    return {"msg": "Check your email to activate account"}
 
 
 @router.post(
@@ -30,8 +36,27 @@ async def register_admin():
     ...
 
 @router.post("/register/activate")
-async def confirm(token: str):
-    ...
+async def confirm(
+        db: DBSessionDepends,
+        token: str,
+):
+    try:
+        try:
+            token_data = decode_token(token)
+        except ExpiredSignatureError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+        except JWTError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        user_id = token_data["id"]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid or expired activation token")
+
+    try:
+        user = await auth_service.activate_user(UUID(user_id), UserRepository(db))
+    except UserAlreadyActivated:
+        raise HTTPException(status_code=400, detail="Account already activated")
+
+    return {"msg": "Account successfully activated"}
 
 
 @router.post("/reset-password")

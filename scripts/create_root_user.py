@@ -24,7 +24,9 @@ async def create_root(root_email: str, root_password: str):
             return
         root = RootUser(
             email=root_email,
+            username="root",
             hashed_password=hash_password(root_password),
+            is_active=True,
         )
         db.add(root)
         await db.commit()

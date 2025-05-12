@@ -22,14 +22,23 @@ def create_jwt_token(payload: dict, expires_delta: timedelta) -> str:
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_access_token(payload: dict, expires_delta: timedelta = timedelta(minutes=15)):
+def create_access_token(payload: dict, expires_delta: timedelta = timedelta(minutes=15)) -> str:
     return create_jwt_token(payload, expires_delta)
 
 
-def create_refresh_token(payload: dict, expires_delta: timedelta = timedelta(days=30)):
+def create_refresh_token(payload: dict, expires_delta: timedelta = timedelta(days=30)) -> str:
+    return create_jwt_token(payload, expires_delta)
+
+
+def create_activation_token(payload: dict, expires_delta: timedelta = timedelta(hours=24)) -> str:
     return create_jwt_token(payload, expires_delta)
 
 
 def decode_token(token: str):
-    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    payload = jwt.decode(
+        token,
+        settings.JWT_SECRET_KEY,
+        algorithms=[settings.JWT_ALGORITHM],
+        options={"require": ["exp", "type"]},
+    )
     return payload

@@ -1,3 +1,5 @@
+from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, ConfigDict
@@ -6,21 +8,37 @@ from app.core.enums import UserRole
 
 
 class UserBase(BaseModel):
+    id: UUID
+    username: str
     email: EmailStr
     role: UserRole
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserModel(UserBase):
-    id: UUID
     hashed_password: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
+class SimpleUserModel(UserBase):
+    ava_id: Optional[UUID] = None
+    bio: Optional[str] = None
+    hashed_password: str
 
-class UserRead(BaseModel):
-    id: UUID
-    email: EmailStr
-    role: UserRole
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserRead(UserBase):
+    pass
+
+
+class SimpleUserRead(UserBase):
+    ava_id: Optional[UUID] = None
+    bio: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
