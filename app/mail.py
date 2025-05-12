@@ -28,28 +28,20 @@ class SendgridMailSender(MailSender):
 
 # ---
 
-from jinja2 import Environment, FileSystemLoader
+from dataclasses import dataclass
 from typing import Dict, Any
 
-
-env = Environment(
-    loader=FileSystemLoader("mail_templates"),
-    enable_async=True,
-)
-
-async def render_email(template_name: str, context: Dict[str, Any]) -> str:
-    html = await env.get_template(f"{template_name}").render_async(**context)
-    return html
-
-# ---
-
-from dataclasses import dataclass
-
+from app.core.settings import jinja_env
 
 @dataclass
 class EmailData:
     html_content: str
     subject: str
+
+
+async def render_email(template_name: str, context: Dict[str, Any]) -> str:
+    html = await jinja_env.get_template(f"{template_name}").render_async(**context)
+    return html
 
 
 async def generate_activate_account_email(email_to: str, token: str) -> EmailData:
