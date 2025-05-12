@@ -17,7 +17,7 @@ async def get_session():
         yield session
 
 
-async def get_token_payload(
+async def get_access_token_payload(
     token_payload: dict = Depends(access_token_scheme),
 ) -> dict:
     if "id" not in token_payload:
@@ -31,7 +31,7 @@ async def get_token_payload(
 
 async def get_current_user(
         db: AsyncSession = Depends(get_session),
-        token_payload: dict = Depends(get_token_payload)) -> UserModel:
+        token_payload: dict = Depends(get_access_token_payload)) -> UserModel:
     try:
         user = await get_user_by_id(token_payload["id"], UserRepository(db))
     except NotFoundError as e:

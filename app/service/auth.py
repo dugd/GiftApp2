@@ -1,11 +1,12 @@
 from uuid import UUID
 
+from app.core.enums import TokenType
 from app.mail import MailSender, generate_activate_account_email
 from app.repositories.orm.user import UserRepository
 from app.models import SimpleUser
 from app.schemas.user import UserModel
 from app.utils.security import (
-    hash_password, verify_password, create_access_token, create_refresh_token, create_activation_token, decode_token
+    hash_password, verify_password, create_token
 )
 from app.exceptions.common import NotFoundError
 from app.exceptions.auth import EmailAlreadyTaken, WrongCredentials, UserAlreadyActivated
@@ -27,7 +28,10 @@ async def register_user(user_data: UserRegister, repo: UserRepository, mail_send
     await repo.add(user)
     user_model = UserModel.model_validate(user)
 
-    activation_token = create_activation_token({"id": user_model.id.hex, "type": "activation"})
+    activation_token = create_token(
+        {"id": user_model.id.hex, "type": TokenType.activation.value},
+        TokenType.activation
+    )
     email_data = await generate_activate_account_email(
         email_to=str(user_model.email),
         token=activation_token,
@@ -64,8 +68,13 @@ async def authenticate_user(email: str, password: str, repo: UserRepository) -> 
 
 
 def create_token_pair(user: UserModel) -> TokenPair:
-    new_access_token = create_access_token(
-        payload={"id": user.id.hex, "sub": user.email, "role": user.role.value, "type": "access"})
-    new_refresh_token = create_refresh_token(payload={"id": user.id.hex, "type": "refresh"})
+    new_access_token = create_token(
+        payload={"id": user.id.hex, "sub": user.email, "role": user.role.value, "type": TokenType.access.value},
+        token_type=TokenType.access,
+    )
+    new_refresh_token = create_token(
+        payload={"id": user.id.hex, "type": TokenType.refresh.value},
+        token_type=TokenType.access,
+    )
 
     return TokenPair(access_token=new_access_token, refresh_token=new_refresh_token)

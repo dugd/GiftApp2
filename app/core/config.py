@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    ACTIVATION_TOKEN_EXPIRE_HOURS: int = 24
 
     AWS_ACCESS_KEY: str
     AWS_SECRET_ACCESS_KEY: str

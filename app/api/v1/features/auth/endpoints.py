@@ -5,15 +5,15 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from jose import ExpiredSignatureError, JWTError
 
+from app.core.enums import UserRole, TokenType
 from app.exceptions.auth import UserAlreadyActivated
 import app.service.auth as auth_service
 import app.service.user as user_service
-from app.core.enums import UserRole
 from app.mail import SendgridMailSender
 from app.repositories.orm.user import UserRepository
 from app.schemas.auth import UserRegister, TokenPair
 from app.schemas.user import UserRead
-from app.api.v1.dependencies import DBSessionDepends, RoleChecker, get_token_payload
+from app.api.v1.dependencies import DBSessionDepends, RoleChecker, get_access_token_payload
 from app.utils.security import decode_token
 from .dependencies import refresh_token_scheme
 
@@ -35,6 +35,7 @@ async def register(db: DBSessionDepends, user_data: UserRegister):
 async def register_admin():
     ...
 
+
 @router.post("/register/activate")
 async def confirm(
         db: DBSessionDepends,
@@ -43,6 +44,8 @@ async def confirm(
     try:
         try:
             token_data = decode_token(token)
+            if token_data["type"] != TokenType.activation.value:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         except ExpiredSignatureError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
         except JWTError:
@@ -90,5 +93,5 @@ async def refresh(db: DBSessionDepends, token_payload: dict = Depends(refresh_to
 
 
 @router.get("/me")
-async def me(payload: dict = Depends(get_token_payload)):
+async def me(payload: dict = Depends(get_access_token_payload)):
     return payload

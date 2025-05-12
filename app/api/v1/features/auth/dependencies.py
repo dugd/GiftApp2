@@ -2,6 +2,7 @@ from fastapi import HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from jose import JWTError, ExpiredSignatureError
 
+from app.core.enums import TokenType
 from app.utils.security import decode_token
 
 
@@ -32,13 +33,13 @@ class TokenBearer(HTTPBearer):
 
 class AccessTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
-        if token_data and token_data.get("type") != "access":
+        if token_data and token_data.get("type") != TokenType.access.value:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 
 class RefreshTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
-        if token_data and token_data.get("type") != "refresh":
+        if token_data and token_data.get("type") != TokenType.refresh.value:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 
