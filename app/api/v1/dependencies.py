@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import async_session
+from app.exceptions.auth import UserIsNotActivated
 from app.repositories.orm.user import UserRepository
 from app.schemas.user import UserModel
 from app.service.user import get_user_by_id
@@ -34,6 +35,8 @@ async def get_current_user(
         token_payload: dict = Depends(get_access_token_payload)) -> UserModel:
     try:
         user = await get_user_by_id(token_payload["id"], UserRepository(db))
+        if not user.is_active:
+            raise UserIsNotActivated(user.username)
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 

@@ -19,3 +19,8 @@ class UsernameAlreadyTaken(GiftAppError):
 class UserAlreadyActivated(GiftAppError):
     def __init__(self, username: str):
         super().__init__(f"user '{username}' is already activated", status_code=409)
+
+
+class UserIsNotActivated(GiftAppError):
+    def __init__(self, username: str):
+        super().__init__(f"user '{username}' is not activated", status_code=401)

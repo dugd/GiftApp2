@@ -9,7 +9,7 @@ from app.utils.security import (
     hash_password, verify_password, create_token
 )
 from app.exceptions.common import NotFoundError
-from app.exceptions.auth import EmailAlreadyTaken, WrongCredentials, UserAlreadyActivated
+from app.exceptions.auth import EmailAlreadyTaken, WrongCredentials, UserAlreadyActivated, UserIsNotActivated
 from app.schemas.auth import UserRegister, TokenPair
 
 
@@ -47,7 +47,6 @@ async def register_user(user_data: UserRegister, repo: UserRepository, mail_send
 
 
 async def activate_user(user_id: UUID, repo: UserRepository) -> UserModel:
-
     user = await repo.get_by_id(user_id)
     if not user:
         raise NotFoundError("User")
@@ -62,6 +61,8 @@ async def activate_user(user_id: UUID, repo: UserRepository) -> UserModel:
 
 async def authenticate_user(email: str, password: str, repo: UserRepository) -> UserModel:
     user = await repo.get_by_email(str(email))
+    if not user.is_active:
+        raise UserIsNotActivated(user.username)
     if not user or not verify_password(password, user.hashed_password):
         raise WrongCredentials()
     return UserModel.model_validate(user)
