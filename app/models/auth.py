@@ -1,9 +1,10 @@
 from typing import List, TYPE_CHECKING
+from uuid import UUID
 
-from sqlalchemy import String
+from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
-from app.core.models.mixins import TimestampMixin, SurrogatePKMixin
+from app.core.models.mixins import TimestampMixin, SurrogatePKMixin, GUID
 from app.core.models.base import Base
 from app.core.enums import UserRole
 
@@ -19,8 +20,10 @@ class User(SurrogatePKMixin, TimestampMixin, Base):
         "polymorphic_on": "role",
     }
 
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     role: Mapped[str] = mapped_column(nullable=False, default=UserRole.USER.value)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
 
     events: Mapped[List["Event"]] = relationship(
@@ -48,6 +51,9 @@ class SimpleUser(User):
     __mapper_args__ = {
         "polymorphic_identity": UserRole.USER.value,
     }
+
+    ava_id: Mapped[UUID] = mapped_column(GUID, nullable=True)
+    bio: Mapped[str] = mapped_column(String, nullable=True)
 
     recipients: Mapped[List["Recipient"]] = relationship(
         "Recipient",
