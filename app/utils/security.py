@@ -3,7 +3,10 @@ from jose import jwt
 from datetime import datetime, timedelta
 
 from app.core.enums import TokenType
-from app.core.config import settings
+from app.core.config import get_settings
+
+settings = get_settings()
+
 
 def hash_password(password: str) -> str:
     password_bytes = password.encode("UTF-8")

@@ -19,7 +19,7 @@ class UserRole(Enum):
     USER = "USER"
 
 
-class TokenType(Enum, str):
+class TokenType(Enum):
     access = "access"
     refresh = "refresh"
     activation = "activation"

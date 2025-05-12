@@ -1,5 +1,8 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from app.core.config import settings
+from app.core.config import get_settings
+
+settings = get_settings()
+
 
 DATABASE_URL = settings.DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
