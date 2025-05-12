@@ -1,10 +1,10 @@
 from app.core.enums import UserRole
-from app.schemas.user import UserBase
+from app.schemas.user import UserModel
 from app.schemas.idea import IdeaModel
 
 
 class IdeaPolicy:
-    def __init__(self, user: UserBase):
+    def __init__(self, user: UserModel):
         self.user = user
 
     def _is_admin(self) -> bool:

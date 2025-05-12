@@ -5,15 +5,15 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from jose import ExpiredSignatureError, JWTError
 
-from app.core.enums import UserRole, TokenType
+from app.core.enums import TokenType
 from app.exceptions.auth import UserAlreadyActivated
 import app.service.auth as auth_service
 import app.service.user as user_service
 from app.mail import SendgridMailSender
 from app.repositories.orm.user import UserRepository
 from app.schemas.auth import UserRegister, TokenPair
-from app.schemas.user import UserRead
-from app.api.v1.dependencies import DBSessionDepends, RoleChecker, get_access_token_payload
+from app.schemas.user import UserRead, UserModel
+from app.api.v1.dependencies import DBSessionDepends, CurrentRootUser, CurrentSimpleUser, get_access_token_payload
 from app.utils.security import decode_token
 from .dependencies import refresh_token_scheme
 
@@ -30,9 +30,8 @@ async def register(db: DBSessionDepends, user_data: UserRegister):
     "/register-admin",
     response_model=UserRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(RoleChecker(UserRole.ROOT.value))]
 )
-async def register_admin():
+async def register_admin(user: CurrentRootUser):
     ...
 
 

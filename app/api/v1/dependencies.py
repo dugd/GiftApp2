@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.enums import UserRole
 from app.core.database import async_session
 from app.exceptions.auth import UserIsNotActivated
 from app.repositories.orm.user import UserRepository
@@ -47,11 +48,19 @@ class RoleChecker:
     def __init__(self, *allowed_roles):
         self.allowed_roles = allowed_roles
 
-    def __call__(self, user: UserModel = Depends(get_current_user)) -> bool:
+    def __call__(self, user: UserModel = Depends(get_current_user)) -> UserModel:
         if not user.role in self.allowed_roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-        return True
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        return user
+
+
+get_current_simple_user = RoleChecker(UserRole.USER.value)
+get_current_admin_user  = RoleChecker(UserRole.ADMIN.value, UserRole.ROOT.value)
+get_current_root_user   = RoleChecker(UserRole.ROOT.value)
 
 
 DBSessionDepends = Annotated[AsyncSession, Depends(get_session)]
 CurrentUserDepends = Annotated[UserModel, Depends(get_current_user)]
+CurrentSimpleUser = Annotated[UserModel, Depends(get_current_simple_user)]
+CurrentAdminUser  = Annotated[UserModel, Depends(get_current_admin_user)]
+CurrentRootUser   = Annotated[UserModel, Depends(get_current_root_user)]

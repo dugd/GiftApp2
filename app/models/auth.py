@@ -25,6 +25,8 @@ class User(SurrogatePKMixin, TimestampMixin, Base):
     role: Mapped[str] = mapped_column(nullable=False, default=UserRole.USER.value)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    ava_id: Mapped[UUID] = mapped_column(GUID, nullable=True)
+    bio: Mapped[str] = mapped_column(String, nullable=True)
 
     events: Mapped[List["Event"]] = relationship(
         "Event",
@@ -51,9 +53,6 @@ class SimpleUser(User):
     __mapper_args__ = {
         "polymorphic_identity": UserRole.USER.value,
     }
-
-    ava_id: Mapped[UUID] = mapped_column(GUID, nullable=True)
-    bio: Mapped[str] = mapped_column(String, nullable=True)
 
     recipients: Mapped[List["Recipient"]] = relationship(
         "Recipient",

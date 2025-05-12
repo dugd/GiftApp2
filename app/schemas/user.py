@@ -13,6 +13,8 @@ class UserBase(BaseModel):
     email: EmailStr
     role: UserRole
     is_active: bool
+    ava_id: Optional[UUID] = None
+    bio: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -25,20 +27,5 @@ class UserModel(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SimpleUserModel(UserBase):
-    ava_id: Optional[UUID] = None
-    bio: Optional[str] = None
-    hashed_password: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class UserRead(UserBase):
     pass
-
-
-class SimpleUserRead(UserBase):
-    ava_id: Optional[UUID] = None
-    bio: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
