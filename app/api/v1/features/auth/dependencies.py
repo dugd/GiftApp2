@@ -3,7 +3,12 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from jose import JWTError, ExpiredSignatureError
 
 from app.core.enums import TokenType
+from app.mail import MailSender
+from app.repositories.orm import UserRepository
+from app.service.auth import UserRegistrationService, AuthService
+from app.service.user import UserService
 from app.utils.security import decode_token
+from app.api.v1.dependencies import DBSessionDepends
 
 
 class TokenBearer(HTTPBearer):
@@ -46,3 +51,15 @@ class RefreshTokenBearer(TokenBearer):
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 access_token_scheme = AccessTokenBearer()
 refresh_token_scheme = RefreshTokenBearer()
+
+
+async def get_register_service(db: DBSessionDepends):
+    return UserRegistrationService(UserRepository(db), MailSender())
+
+
+async def get_auth_service(db: DBSessionDepends):
+    return AuthService(UserRepository(db))
+
+
+async def get_user_service(db: DBSessionDepends):
+    return UserService(UserRepository(db))
