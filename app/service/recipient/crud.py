@@ -68,9 +68,9 @@ class RecipientService:
         return RecipientModel.model_validate(recipient)
 
 
-    async def list(self, user: UserModel) -> Sequence[RecipientModel]:
+    async def list(self, user: UserModel, limit: int = 20, offset: int = 0) -> Sequence[RecipientModel]:
         if user.role == UserRole.USER.value:
             recipients = await self.repo.get_by_user_id(user.id)
         else:
-            recipients = await self.repo.list()
+            recipients = await self.repo.list(limit=limit, skip=offset)
         return [RecipientModel.model_validate(recipient) for recipient in recipients]

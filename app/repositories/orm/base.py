@@ -56,10 +56,10 @@ class SQLAlchemyRepository(AbstractRepository[T]):
                 else:
                     stmt = stmt.order_by(column)
 
-
-        stmt = stmt.offset(skip)
         if limit > 0:
             stmt = stmt.limit(limit)
+        if skip > 0:
+            stmt = stmt.offset(skip)
 
         result = await self._session.execute(stmt)
         return list(result.scalars().all())

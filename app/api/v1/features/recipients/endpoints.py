@@ -5,6 +5,7 @@ from app.service.recipient import RecipientService
 from app.schemas.recipient import RecipientCreate, RecipientModel, RecipientUpdateInfo, \
     RecipientUpdateBirthday
 from app.api.v1.dependencies import CurrentUserDepends, CurrentSimpleUser
+from app.api.v1.pagination import PaginationParams
 from .dependencies import get_recipient_service
 
 
@@ -14,10 +15,11 @@ router = APIRouter(prefix="/recipients", tags=["recipients"])
 @router.get("/", response_model=list[RecipientModel])
 async def index(
         user: CurrentUserDepends,
+        pagination: PaginationParams = Depends(),
         recipient_service: RecipientService = Depends(get_recipient_service),
 ):
     """Get list of recipients"""
-    recipients = await recipient_service.list(user)
+    recipients = await recipient_service.list(user, pagination.limit, pagination.offset)
 
     return recipients
 
