@@ -2,6 +2,7 @@ from uuid import UUID
 from datetime import date
 from fastapi import APIRouter, status, HTTPException, Depends
 
+from app.core.enums import UserRole
 from app.models import SimpleUser, AdminUser
 from app.exceptions.event import PastEventError
 from app.service.event import event_create, event_update_info, event_delete, get_event, get_event_list, \
@@ -10,7 +11,7 @@ from app.schemas.event import (
     EventCreate, EventModel, EventFull, OccurrencesView, EventOccurrenceId, EventUpdate,
     EventNext, CalendarView, EventOccurrenceModel
 )
-from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends, get_current_root_user
+from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends, RoleChecker
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -54,7 +55,7 @@ async def index_occurrences(
 @router.post(
     "/occurrences/generate",
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(get_current_root_user)])
+    dependencies=[Depends(RoleChecker(UserRole.ROOT))])
 async def manual_generate(
         db: DBSessionDepends,
 ):

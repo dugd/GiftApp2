@@ -33,6 +33,7 @@ class User(SurrogatePKMixin, TimestampMixin, Base):
 
     avatar: Mapped["MediaFile"] = relationship(
         "MediaFile",
+        lazy="joined",
     )
     events: Mapped[List["Event"]] = relationship(
         "Event",

@@ -10,10 +10,10 @@ from app.exceptions.auth import UserAlreadyActivated
 from app.service.auth import AuthService, UserRegistrationService
 from app.service.user import UserService
 from app.schemas.auth import UserRegister, TokenPair
-from app.schemas.user import UserRead
+from app.schemas.user import UserModel
 from app.utils.security import decode_token
-from app.api.v1.dependencies import CurrentRootUser, get_access_token_payload, refresh_token_scheme
-from .dependencies import get_auth_service, get_register_service, get_user_service
+from app.api.v1.dependencies import CurrentRootUser, get_access_token_payload, refresh_token_scheme, get_user_service
+from .dependencies import get_auth_service, get_register_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -29,7 +29,7 @@ async def register(
 
 @router.post(
     "/register-admin",
-    response_model=UserRead,
+    response_model=UserModel,
     status_code=status.HTTP_201_CREATED,
 )
 async def register_admin(user: CurrentRootUser):

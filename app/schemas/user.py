@@ -22,14 +22,10 @@ class UserBase(BaseModel):
 
 
 class UserModel(UserBase):
-    avatar_id: Optional[UUID] = None
+    avatar: Optional[MediaFileShort] = None
     hashed_password: str
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class UserRead(UserBase):
-    avatar: Optional[MediaFileShort] = None
 
 
 class UserUpdate(BaseModel):
