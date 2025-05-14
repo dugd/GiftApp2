@@ -1,4 +1,3 @@
-# app/service/recipient/policy.py
 from app.schemas.recipient import RecipientModel
 from app.schemas.user import UserModel
 from app.core.enums import UserRole

@@ -13,12 +13,12 @@ router = APIRouter(prefix="/recipients", tags=["recipients"])
 
 
 @router.get("/", response_model=list[RecipientModel])
-async def index(
-        user: CurrentUserDepends,
+async def index_my(
+        user: CurrentSimpleUser,
         pagination: PaginationParams = Depends(),
         recipient_service: RecipientService = Depends(get_recipient_service),
 ):
-    """Get list of recipients"""
+    """Get list of user recipients"""
     recipients = await recipient_service.list(user, pagination.limit, pagination.offset)
 
     return recipients

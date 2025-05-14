@@ -1,13 +1,14 @@
 from typing import Type, Any, Optional, List, Dict
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, ColumnElement
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.models.mixins import SurrogatePKMixin
 from app.repositories.abstract.base import AbstractRepository, T
 
 
-class SQLAlchemyRepository(AbstractRepository[T]):
-    def __init__(self, model: Type[T], session: AsyncSession):
+class SQLAlchemyRepository(AbstractRepository[SurrogatePKMixin]):
+    def __init__(self, model: Type[SurrogatePKMixin], session: AsyncSession):
         self._session = session
         self._model = model
 
@@ -40,7 +41,7 @@ class SQLAlchemyRepository(AbstractRepository[T]):
         stmt = select(self._model)
 
         for attr, value in filters.items():
-            column = getattr(self._model, attr, None)
+            column: ColumnElement = getattr(self._model, attr, None)
             if column is None:
                 continue
             if isinstance(value, list):
