@@ -4,10 +4,13 @@ from fastapi import FastAPI, Request
 from apscheduler.triggers.cron import CronTrigger
 from starlette.responses import JSONResponse
 
-from app.core.config import settings
 from app.sсheduler import scheduler, run_generate_occur
-from app.api.v1.router import api_router
+from app.api.v1 import api_router
 from app.exceptions import GiftAppError
+from app.core.config import get_settings
+
+settings = get_settings()
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):

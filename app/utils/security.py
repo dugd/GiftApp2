@@ -2,7 +2,11 @@ import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
 
-from app.core.config import settings
+from app.core.enums import TokenType
+from app.core.config import get_settings
+
+settings = get_settings()
+
 
 def hash_password(password: str) -> str:
     password_bytes = password.encode("UTF-8")
@@ -22,14 +26,22 @@ def create_jwt_token(payload: dict, expires_delta: timedelta) -> str:
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_access_token(payload: dict, expires_delta: timedelta = timedelta(minutes=15)):
-    return create_jwt_token(payload, expires_delta)
+_EXPIRES_DELTAS = {
+    TokenType.access: timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+    TokenType.refresh: timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    TokenType.activation: timedelta(hours=settings.ACTIVATION_TOKEN_EXPIRE_HOURS),
+}
 
 
-def create_refresh_token(payload: dict, expires_delta: timedelta = timedelta(days=30)):
-    return create_jwt_token(payload, expires_delta)
+def create_token(payload: dict, token_type: TokenType) -> str:
+    return create_jwt_token(payload, _EXPIRES_DELTAS[token_type])
 
 
 def decode_token(token: str):
-    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    payload = jwt.decode(
+        token,
+        settings.JWT_SECRET_KEY,
+        algorithms=[settings.JWT_ALGORITHM],
+        options={"require": ["exp", "type"]},
+    )
     return payload

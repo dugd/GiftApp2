@@ -5,10 +5,13 @@ from alembic import context
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.core.config import settings
+from app.core.config import get_settings
 from app.core.models.base import Base
 
 import app.models # noqa
+
+
+settings = get_settings()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

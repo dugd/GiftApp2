@@ -9,7 +9,7 @@ from app.core.models.base import Base
 import app.models  # noqa
 from app.models.auth import RootUser, SimpleUser
 from app.utils.security import hash_password
-from app.core.database import get_session
+from app.api.v1.dependencies import get_session
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)

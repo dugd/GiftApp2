@@ -1,12 +1,11 @@
 from uuid import UUID
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status
 
-from app.core.enums import UserRole
 import app.service.recipient as recipient_service
 from app.repositories.orm.recipient import RecipientRepository
 from app.schemas.recipient import RecipientCreate, RecipientModel, RecipientUpdateInfo, \
     RecipientUpdateBirthday
-from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends, RoleChecker
+from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends, CurrentSimpleUser
 
 router = APIRouter(prefix="/recipients", tags=["recipients"])
 
@@ -35,11 +34,10 @@ async def get(
 
 @router.post(
     "/", response_model=RecipientModel, status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(RoleChecker(UserRole.USER.value))]
 )
 async def create(
         db: DBSessionDepends,
-        user: CurrentUserDepends,
+        user: CurrentSimpleUser,
         data: RecipientCreate,
 ):
     """Create new recipient"""

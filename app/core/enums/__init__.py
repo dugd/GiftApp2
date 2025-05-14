@@ -17,3 +17,9 @@ class UserRole(Enum):
     ROOT = "ROOT"
     ADMIN = "ADMIN"
     USER = "USER"
+
+
+class TokenType(Enum):
+    access = "access"
+    refresh = "refresh"
+    activation = "activation"
