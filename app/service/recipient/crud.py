@@ -1,10 +1,9 @@
 from uuid import UUID
-from typing import Sequence
+from typing import Sequence, Optional
 
 from app.service.recipient.policy import RecipientPolicy
 from app.repositories.orm.recipient import RecipientRepository
 from app.models import Recipient
-from app.core.enums import UserRole
 from app.exceptions.common import NotFoundError, PolicyPermissionError
 from app.schemas.recipient import RecipientCreate, RecipientUpdateInfo, RecipientUpdateBirthday, RecipientModel
 from app.schemas.user import UserModel
@@ -68,6 +67,22 @@ class RecipientService:
         return RecipientModel.model_validate(recipient)
 
 
-    async def list(self, user: UserModel, limit: int = 20, offset: int = 0) -> Sequence[RecipientModel]:
-        recipients = await self.repo.get_by_user_id(user.id, limit=limit, skip=offset)
+    async def list_my(
+            self,
+            user: UserModel,
+            limit: int = 20,
+            offset: int = 0,
+            order_by: Optional[str] = None,
+            desc_order: bool = False,
+            filters: dict = None
+    ) -> Sequence[RecipientModel]:
+        filters = filters or {}
+        recipients = await self.repo.get_by_user_id(
+            user.id,
+            limit=limit,
+            skip=offset,
+            order_by=order_by,
+            desc_order=desc_order,
+            **filters,
+        )
         return [RecipientModel.model_validate(recipient) for recipient in recipients]
