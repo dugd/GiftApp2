@@ -38,3 +38,11 @@ class MediaFileModel(MediaFileBase):
 
 class MediaFileRead(MediaFileBase):
     id: UUID
+
+
+class MediaFileShort(BaseModel):
+    id: UUID
+    url: HttpUrl
+    alt: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)

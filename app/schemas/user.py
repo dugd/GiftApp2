@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, ConfigDict
 
 from app.core.enums import UserRole
-
+from app.schemas.media import MediaFileShort
 
 class UserBase(BaseModel):
     id: UUID
@@ -13,7 +13,7 @@ class UserBase(BaseModel):
     email: EmailStr
     role: UserRole
     is_active: bool
-    ava_id: Optional[UUID] = None
+    display_name: Optional[str] = None
     bio: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -22,10 +22,18 @@ class UserBase(BaseModel):
 
 
 class UserModel(UserBase):
+    avatar_id: Optional[UUID] = None
     hashed_password: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class UserRead(UserBase):
-    pass
+    avatar: Optional[MediaFileShort] = None
+
+
+class UserUpdate(BaseModel):
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)

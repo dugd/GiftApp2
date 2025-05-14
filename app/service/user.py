@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.repositories.orm.user import UserRepository
 from app.exceptions.common import NotFoundError
-from app.schemas.user import UserModel
+from app.schemas.user import UserModel, UserUpdate
 
 
 class UserService:
@@ -15,9 +15,13 @@ class UserService:
             raise NotFoundError("User")
         return UserModel.model_validate(user)
 
+    async def update_profile(self, user_id: UUID, data: UserUpdate) -> UserModel:
+        user = await self.repo.get_by_id(user_id)
+        await self.repo.update(user, data.model_dump(exclude_unset=True))
+        return UserModel.model_validate(user)
 
-    async def get_user_by_email(self, email: str) -> UserModel:
-        user = await self.repo.get_by_email(email)
-        if not user:
-            raise NotFoundError("User")
+    async def attach_avatar(self, user_id: UUID, media_id: UUID) -> UserModel:
+        user = await self.repo.get_by_id(user_id)
+        user.ava_id = media_id
+        await self.repo.update(user, {})
         return UserModel.model_validate(user)

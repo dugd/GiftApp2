@@ -11,9 +11,9 @@ from app.service.auth import AuthService, UserRegistrationService
 from app.service.user import UserService
 from app.schemas.auth import UserRegister, TokenPair
 from app.schemas.user import UserRead
-from app.api.v1.dependencies import CurrentRootUser, get_access_token_payload
 from app.utils.security import decode_token
-from .dependencies import refresh_token_scheme, get_auth_service, get_register_service, get_user_service
+from app.api.v1.dependencies import CurrentRootUser, get_access_token_payload, refresh_token_scheme
+from .dependencies import get_auth_service, get_register_service, get_user_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

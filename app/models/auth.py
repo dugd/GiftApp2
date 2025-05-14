@@ -1,7 +1,7 @@
 from typing import List, TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import String, Boolean
+from sqlalchemy import String, Boolean, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship
 
 from app.core.models.mixins import TimestampMixin, SurrogatePKMixin, GUID
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .recipient import Recipient
     from .event import Event
     from .idea import GiftIdea
+    from .media import MediaFile
 
 
 class User(SurrogatePKMixin, TimestampMixin, Base):
@@ -25,9 +26,14 @@ class User(SurrogatePKMixin, TimestampMixin, Base):
     role: Mapped[str] = mapped_column(nullable=False, default=UserRole.USER.value)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
-    ava_id: Mapped[UUID] = mapped_column(GUID, nullable=True)
+    display_name: Mapped[str] = mapped_column(String, nullable=True)
     bio: Mapped[str] = mapped_column(String, nullable=True)
 
+    ava_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("media_files.id"), nullable=True)
+
+    avatar: Mapped["MediaFile"] = relationship(
+        "MediaFile",
+    )
     events: Mapped[List["Event"]] = relationship(
         "Event",
         back_populates="user",

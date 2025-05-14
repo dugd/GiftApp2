@@ -7,11 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.enums import UserRole
 from app.core.database import async_session
 from app.exceptions.auth import UserIsNotActivated
-from app.repositories.orm.user import UserRepository
 from app.schemas.user import UserModel
-from app.service.user import get_user_by_id
+from app.service.user import UserService
 from app.exceptions.common import NotFoundError
-from app.api.v1.features.auth.dependencies import access_token_scheme
+from .security import access_token_scheme
 
 
 async def get_session():
@@ -32,10 +31,10 @@ async def get_access_token_payload(
 
 
 async def get_current_user(
-        db: AsyncSession = Depends(get_session),
+        user_service: UserService = Depends(get_user_service),
         token_payload: dict = Depends(get_access_token_payload)) -> UserModel:
     try:
-        user = await get_user_by_id(token_payload["id"], UserRepository(db))
+        user = await user_service.get_user_by_id(token_payload["id"])
         if not user.is_active:
             raise UserIsNotActivated(user.username)
     except NotFoundError as e:
