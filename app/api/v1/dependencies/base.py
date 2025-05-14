@@ -47,9 +47,9 @@ class RoleChecker:
         return user
 
 
-get_current_simple_user = RoleChecker(UserRole.USER.value)
-get_current_admin_user  = RoleChecker(UserRole.ADMIN.value, UserRole.ROOT.value)
-get_current_root_user   = RoleChecker(UserRole.ROOT.value)
+get_current_simple_user = RoleChecker(UserRole.USER)
+get_current_admin_user  = RoleChecker(UserRole.ADMIN, UserRole.ROOT)
+get_current_root_user   = RoleChecker(UserRole.ROOT)
 
 
 CurrentUserDepends = Annotated[UserModel, Depends(get_current_user)]

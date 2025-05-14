@@ -7,13 +7,13 @@ from jose import ExpiredSignatureError, JWTError
 
 from app.core.enums import TokenType
 from app.exceptions.auth import UserAlreadyActivated
-from app.service.auth import AuthService, UserRegistrationService
+from app.service.auth import AuthService, RegistrationService
 from app.service.user import UserService
 from app.schemas.auth import UserRegister, TokenPair
 from app.schemas.user import UserModel
 from app.utils.security import decode_token
 from app.api.v1.dependencies import CurrentRootUser, get_access_token_payload, refresh_token_scheme, get_user_service
-from .dependencies import get_auth_service, get_register_service
+from .dependencies import get_auth_service, get_user_register_service, get_admin_register_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
         user_data: UserRegister,
-        register_service: UserRegistrationService = Depends(get_register_service),
+        register_service: RegistrationService = Depends(get_user_register_service),
 ):
     user = await register_service.register(user_data)
     return {"msg": "Check your email to activate account"}
@@ -32,8 +32,13 @@ async def register(
     response_model=UserModel,
     status_code=status.HTTP_201_CREATED,
 )
-async def register_admin(user: CurrentRootUser):
-    ...
+async def register_admin(
+        user: CurrentRootUser,
+        admin_data: UserRegister,
+        register_service: RegistrationService = Depends(get_admin_register_service),
+):
+    user = await register_service.register(admin_data)
+    return user
 
 
 @router.post("/register/activate")
