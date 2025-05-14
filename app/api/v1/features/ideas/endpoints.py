@@ -1,11 +1,12 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 
 from app.schemas.idea import IdeaCreate, IdeaModel, IdeaUpdateInfo
 from app.service.idea import IdeaService
-from app.api.v1.dependencies import DBSessionDepends, CurrentUserDepends
+from app.api.v1.dependencies import CurrentUserDepends
+from .dependencies import get_idea_service
 
 router = APIRouter(prefix="/ideas", tags=["ideas"])
 
@@ -13,69 +14,62 @@ router = APIRouter(prefix="/ideas", tags=["ideas"])
 @router.post("/", response_model=IdeaModel, status_code=status.HTTP_201_CREATED)
 async def create(
         user: CurrentUserDepends,
-        db: DBSessionDepends,
         data: IdeaCreate,
+        idea_service: IdeaService = Depends(get_idea_service),
 ):
-    service = IdeaService(db)
-    return await service.create_idea(data, user)
+    return await idea_service.create(user, data)
 
 
 @router.get("/my", response_model=List[IdeaModel])
 async def index_my(
         user: CurrentUserDepends,
-        db: DBSessionDepends,
         archived: bool = False,
+        idea_service: IdeaService = Depends(get_idea_service),
 ):
-    service = IdeaService(db)
-    return await service.get_users_ideas_list(user.id)
+    return await idea_service.get_user_ideas(user.id)
 
 
 @router.get("/global", response_model=List[IdeaModel])
 async def index_global(
-        _: CurrentUserDepends,
-        db: DBSessionDepends,
+        user: CurrentUserDepends,
         archived: bool = False,
+        idea_service: IdeaService = Depends(get_idea_service),
 ):
-    service = IdeaService(db)
-    return await service.get_global_ideas_list()
+    return await idea_service.get_global_ideas()
 
 
 @router.get("/{idea_id}", response_model=List[IdeaModel])
 async def get(
         user: CurrentUserDepends,
-        db: DBSessionDepends,
         idea_id: UUID,
+        idea_service: IdeaService = Depends(get_idea_service),
 ):
-    service = IdeaService(db)
-    return await service.get_idea_by_id(idea_id, user)
+    return await idea_service.get_one(user, idea_id)
 
 
 @router.patch("/{idea_id}", response_model=List[IdeaModel], status_code=status.HTTP_202_ACCEPTED)
 async def update_info(
         user: CurrentUserDepends,
-        db: DBSessionDepends,
         idea_id: UUID,
         data: IdeaUpdateInfo,
+        idea_service: IdeaService = Depends(get_idea_service),
 ):
-    service = IdeaService(db)
-    return await service.update_idea_info(idea_id, data, user)
+    return await idea_service.update_info(user, idea_id, data)
 
 
 @router.delete("/{idea_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete(
         user: CurrentUserDepends,
-        db: DBSessionDepends,
         idea_id: UUID,
+        idea_service: IdeaService = Depends(get_idea_service),
 ):
-    service = IdeaService(db)
-    await service.soft_delete_idea(idea_id, user)
+    await idea_service.soft_delete(user, idea_id)
 
 
 router.post("/{idea_id}/archive", response_model=List[IdeaModel], status_code=status.HTTP_202_ACCEPTED)
 async def archive(
         user: CurrentUserDepends,
-        db: DBSessionDepends,
         idea_id: UUID,
+        idea_service: IdeaService = Depends(get_idea_service),
 ):
-    service = IdeaService(db)
-    return await service.archive_idea(idea_id, user)
+    return await idea_service.archive(user, idea_id)

@@ -14,18 +14,19 @@ class RecipientService:
         self.repo = repo
         self.policy = policy
 
-    async def _check_permission(self, user: UserModel, action: str, recipient: RecipientModel = None):
+    async def _check_permission(self, user: UserModel, action: str, recipient: Recipient = None):
         policy = self.policy(user)
+        schema = recipient and RecipientModel.model_validate(recipient)
 
         match action:
             case "create":
                 allowed = policy.can_create()
             case "view":
-                allowed = policy.can_view(recipient)
+                allowed = policy.can_view(schema)
             case "edit":
-                allowed = policy.can_edit(recipient)
+                allowed = policy.can_edit(schema)
             case "delete":
-                allowed = policy.can_delete(recipient)
+                allowed = policy.can_delete(schema)
             case _:
                 raise ValueError(f"Unknown action '{action}'")
 
@@ -39,14 +40,14 @@ class RecipientService:
         return RecipientModel.model_validate(recipient)
 
     async def update_info(self, recipient_id: UUID, user: UserModel, data: RecipientUpdateInfo) -> RecipientModel:
-        recipient = await self.repo.get_by_id(recipient_id)
+        recipient = await self._get_model(recipient_id)
         await self._check_permission(user, "edit", recipient)
         updated = await self.repo.update(recipient, data.model_dump(exclude_unset=True))
         return RecipientModel.model_validate(updated)
 
 
     async def update_birthday(self, recipient_id: UUID, user: UserModel, data: RecipientUpdateBirthday) -> RecipientModel:
-        recipient = await self.repo.get_by_id(recipient_id)
+        recipient = await self._get_model(recipient_id)
         await self._check_permission(user, "edit", recipient)
         recipient.birthday = data.birthday
         updated = await self.repo.update(recipient, {})
@@ -54,15 +55,13 @@ class RecipientService:
 
 
     async def delete(self, recipient_id: UUID, user: UserModel):
-        recipient = await self.repo.get_by_id(recipient_id)
+        recipient = await self._get_model(recipient_id)
         await self._check_permission(user, "delete", recipient)
         await self.repo.delete(recipient)
 
 
-    async def get_recipient(self, recipient_id: UUID, user: UserModel) -> RecipientModel:
-        recipient = await self.repo.get_by_id(recipient_id)
-        if not recipient:
-            raise NotFoundError("Recipient")
+    async def get_one(self, recipient_id: UUID, user: UserModel) -> RecipientModel:
+        recipient = await self._get_model(recipient_id)
         await self._check_permission(user, "view", recipient)
         return RecipientModel.model_validate(recipient)
 
@@ -86,3 +85,9 @@ class RecipientService:
             **filters,
         )
         return [RecipientModel.model_validate(recipient) for recipient in recipients]
+
+    async def _get_model(self, recipient_id: UUID) -> Recipient:
+        recipient = await self.repo.get_by_id(recipient_id)
+        if not recipient:
+            raise NotFoundError("Recipient")
+        return recipient
