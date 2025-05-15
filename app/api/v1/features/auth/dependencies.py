@@ -1,11 +1,11 @@
-from app.mail import MailSender
+from app.mail import SendgridMailSender
 from app.repositories.orm import UserRepository
 from app.service.auth import RegistrationService, UserRegistrationService, AdminRegistrationService, AuthService
 from app.api.v1.dependencies import DBSessionDepends
 
 
 async def get_user_register_service(db: DBSessionDepends) -> RegistrationService:
-    return UserRegistrationService(UserRepository(db), MailSender())
+    return UserRegistrationService(UserRepository(db), SendgridMailSender())
 
 
 async def get_admin_register_service(db: DBSessionDepends) -> RegistrationService:
