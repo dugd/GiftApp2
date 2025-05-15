@@ -1,17 +1,13 @@
-[project]
+[tool.poetry]
 name = "giftapp2"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "Dugd_Nitkin",email = "dugd.nitkin@gmail.com"}
-]
+description = "Gift planning and tracking app"
+authors = ["Dugd_Nitkin <dugd.nitkin@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.12"
-
-[tool.poetry]
-package-mode = false
+packages = [{ include = "giftapp2" }]
 
 [tool.poetry.dependencies]
+python = ">=3.12"
 fastapi = "^0.115.12"
 uvicorn = "^0.34.2"
 sqlalchemy = "^2.0.40"
