@@ -20,22 +20,21 @@ class SQLAlchemyRepository(AbstractRepository[U]):
 
     async def add(self, entity: U) -> U:
         self._session.add(entity)
-        await self._session.flush()
         await self._session.commit()
+        await self._session.refresh(entity)
         return entity
 
     async def update(self, entity: U, data: Dict[str, Any]) -> U:
         for field, value in data.items():
             setattr(entity, field, value)
-        await self._session.flush()
         await self._session.commit()
+        await self._session.refresh(entity)
         return entity
 
     async def delete(self, entity: U) -> None:
         await self._session.delete(entity)
-        await self._session.flush()
         await self._session.commit()
-
+        await self._session.refresh(entity)
     async def list(
             self,
             skip: int = 0,
