@@ -56,7 +56,7 @@ async def index_global(
     )
 
 
-@router.get("/{idea_id}", response_model=List[IdeaModel])
+@router.get("/{idea_id}", response_model=IdeaModel)
 async def get(
         user: CurrentUserDepends,
         idea_id: UUID,
@@ -65,7 +65,7 @@ async def get(
     return await idea_service.get_one(user, idea_id)
 
 
-@router.patch("/{idea_id}", response_model=List[IdeaModel], status_code=status.HTTP_202_ACCEPTED)
+@router.patch("/{idea_id}", response_model=IdeaModel, status_code=status.HTTP_202_ACCEPTED)
 async def update_info(
         user: CurrentUserDepends,
         idea_id: UUID,
@@ -84,7 +84,7 @@ async def delete(
     await idea_service.soft_delete(user, idea_id)
 
 
-router.post("/{idea_id}/archive", response_model=List[IdeaModel], status_code=status.HTTP_202_ACCEPTED)
+router.post("/{idea_id}/archive", response_model=IdeaModel, status_code=status.HTTP_202_ACCEPTED)
 async def archive(
         user: CurrentUserDepends,
         idea_id: UUID,

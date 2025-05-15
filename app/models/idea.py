@@ -34,7 +34,6 @@ class GiftIdea(SurrogatePKMixin, TimestampMixin, SoftDeleteMixin, Base):
     def is_archived(self):
         return self.archived_at is not None
 
-    @classmethod
     @is_archived.expression
     def is_archived(cls):
         return cls.archived_at.isnot(None)
