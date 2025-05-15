@@ -1,6 +1,6 @@
 from typing import TypeVar, Type, Any, Optional, List, Dict
 
-from sqlalchemy import select, func, desc, ColumnElement
+from sqlalchemy import select, func, desc, ColumnElement, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.models.mixins import SurrogatePKMixin
@@ -14,6 +14,9 @@ class SQLAlchemyRepository(AbstractRepository[U]):
     def __init__(self, model: Type[U], session: AsyncSession):
         self._session = session
         self._model = model
+
+    def _base_stmt(self) -> Select:
+        return select(self._model)
 
     async def add(self, entity: U) -> U:
         self._session.add(entity)
@@ -41,7 +44,7 @@ class SQLAlchemyRepository(AbstractRepository[U]):
             desc_order: bool = False,
             **filters: Any,
         ) -> List[U]:
-        stmt = select(self._model)
+        stmt = self._base_stmt()
 
         for attr, value in filters.items():
             strict = True
@@ -73,16 +76,17 @@ class SQLAlchemyRepository(AbstractRepository[U]):
         return list(result.scalars().all())
 
     async def get_by_id(self, _id: Any) -> Optional[U]:
-        stmt = select(self._model).where(self._model.id == _id)
+        stmt = self._base_stmt().where(self._model.id == _id)
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def exists(self, _id: Any) -> bool:
-        stmt = select(self._model).where(self._model.id == _id)
+        stmt = self._base_stmt().where(self._model.id == _id)
         result = await self._session.execute(stmt)
         return bool(result.first())
 
     async def count(self) -> int:
-        stmt = select(func.count(self._model))
+        base_sub = self._base_stmt().subquery()
+        stmt = select(func.count()).select_from(base_sub)
         result = await self._session.execute(stmt)
         return result.first()[0]

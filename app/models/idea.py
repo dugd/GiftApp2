@@ -7,6 +7,7 @@ from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import String, Boolean, Numeric, JSON, TIMESTAMP
 from sqlalchemy.ext.mutable import MutableList
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from app.core.models.base import Base
 from app.core.models.mixins import GUID, SurrogatePKMixin, TimestampMixin, SoftDeleteMixin
@@ -28,6 +29,14 @@ class GiftIdea(SurrogatePKMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     def archive(self):
         self.archived_at = func.now()
+
+    @hybrid_property
+    def is_archived(self):
+        return self.archived_at is not None
+
+    @is_archived.expression
+    def is_archived(cls):
+        return cls.archived_at.isnot(None)
 
     user_id: Mapped[UUID] = mapped_column(GUID, ForeignKey("users.id"), nullable=True)
 

@@ -40,7 +40,7 @@ async def get(
         recipient_service: RecipientService = Depends(get_recipient_service),
 ):
     """Get recipient by ID"""
-    recipient = await recipient_service.get_recipient(recipient_id, user)
+    recipient = await recipient_service.get_one(recipient_id, user)
     return recipient
 
 

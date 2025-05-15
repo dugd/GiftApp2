@@ -1,72 +1,107 @@
 from uuid import UUID
+from typing import Sequence, Optional
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.exceptions.common import GiftAppError, NotFoundError, PolicyPermissionError
+from app.repositories.orm import IdeaRepository
+from app.schemas.idea import IdeaCreate, IdeaUpdateInfo, IdeaModel
+from app.schemas.user import UserModel
+from app.exceptions.common import NotFoundError, PolicyPermissionError
 from app.service.idea.policy import IdeaPolicy
-from app.models import GiftIdea, User, SimpleUser
-from app.schemas.idea import IdeaCreate, IdeaModel, IdeaUpdateInfo
+from app.models import GiftIdea
 
 
 class IdeaService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
+    def __init__(self, repo: IdeaRepository, policy_cls: type[IdeaPolicy]):
+        self.repo = repo
+        self.policy_cls = policy_cls
 
-    async def create_idea(self, data: IdeaCreate, user: User) -> IdeaModel:
-        if not IdeaPolicy(user).can_create(data.is_global):
-            raise PolicyPermissionError("Forbidden to create recipient")
+    def _check_permission(self, user: UserModel, action: str, idea: GiftIdea = None, is_global: bool = False):
+        policy = self.policy_cls(user)
+        schema = idea and IdeaModel.model_validate(idea)
 
-        idea = GiftIdea(**data.model_dump(), user_id=user.id)
-        self.db.add(idea)
-        await self.db.commit()
+        match action:
+            case "create":
+                allowed = policy.can_create(is_global)
+            case "view":
+                allowed = policy.can_view(schema)
+            case "edit":
+                allowed = policy.can_edit(schema)
+            case "delete":
+                allowed = policy.can_delete(schema)
+            case _:
+                raise ValueError(f"Unknown policy action: {action}")
+
+        if not allowed:
+            raise PolicyPermissionError(f"Forbidden to {action} idea")
+
+    async def create(self, user: UserModel, data: IdeaCreate) -> IdeaModel:
+        self._check_permission(user, "create", is_global=data.is_global)
+        idea = GiftIdea(**data.model_dump(mode="json"), user_id=user.id)
+        await self.repo.add(idea)
         return IdeaModel.model_validate(idea)
 
-    async def update_idea_info(self, idea_id: UUID, data: IdeaUpdateInfo, user: User) -> IdeaModel:
-        idea = await self.get_idea_by_id(idea_id, user)
-        if not IdeaPolicy(user).can_edit(idea):
-            raise PolicyPermissionError("Forbidden to edit recipient")
-        for key, value in data.model_dump(exclude_unset=True).items():
-            setattr(idea, key, value)
-        await self.db.commit()
-        return IdeaModel.model_validate(idea)
+    async def update_info(self, user: UserModel, idea_id: UUID, data: IdeaUpdateInfo) -> IdeaModel:
+        idea = await self._get_model(idea_id)
+        self._check_permission(user, "edit", idea)
+        updated = await self.repo.update(idea, data.model_dump(exclude_unset=True))
+        return IdeaModel.model_validate(updated)
 
-    async def soft_delete_idea(self, idea_id: UUID, user: User):
-        idea = await self.get_idea_by_id(idea_id, user)
-        if not IdeaPolicy(user).can_delete(idea):
-            raise PolicyPermissionError("Forbidden to delete recipient")
+    async def soft_delete(self, user: UserModel, idea_id: UUID):
+        idea = await self._get_model(idea_id)
+        self._check_permission(user, "delete", idea)
         idea.soft_delete()
-        await self.db.commit()
+        await self.repo.update(idea, {})
 
-    async def archive_idea(self, idea_id: UUID, user: User) -> IdeaModel:
-        idea = await self.get_idea_by_id(idea_id, user)
-        if not IdeaPolicy(user).can_edit(idea):
-            raise PolicyPermissionError("Forbidden to edit recipient")
+    async def archive(self, user: UserModel, idea_id: UUID) -> IdeaModel:
+        idea = await self._get_model(idea_id)
+        self._check_permission(user, "edit", idea)
         idea.archive()
-        await self.db.commit()
+        updated = await self.repo.update(idea, {})
+        return IdeaModel.model_validate(updated)
+
+    async def get_user_ideas(
+            self,
+            user: UserModel,
+            limit: int = 20,
+            offset: int = 0,
+            order_by: Optional[str] = None,
+            desc_order: bool = False,
+            filters: dict = None
+    ) -> Sequence[IdeaModel]:
+        ideas = await self.repo.get_by_user_id(
+            user.id,
+            offset,
+            limit,
+            order_by,
+            desc_order,
+            **filters,
+        )
+        return [IdeaModel.model_validate(i) for i in ideas]
+
+    async def get_global_ideas(
+            self,
+            limit: int = 20,
+            offset: int = 0,
+            order_by: Optional[str] = None,
+            desc_order: bool = False,
+            filters: dict = None
+    ) -> Sequence[IdeaModel]:
+        ideas = await self.repo.list(
+            offset,
+            limit,
+            order_by,
+            desc_order,
+            is_global=True,
+            **filters,
+        )
+        return [IdeaModel.model_validate(i) for i in ideas]
+
+    async def get_one(self, user: UserModel, idea_id: UUID) -> IdeaModel:
+        idea = await self._get_model(idea_id)
+        self._check_permission(user, "view", idea)
         return IdeaModel.model_validate(idea)
 
-    async def get_users_ideas_list(self, user_id: UUID) -> list[IdeaModel]:
-        stmt = select(GiftIdea).where(GiftIdea.deleted_at == None).where(GiftIdea.user_id == user_id)
-        result = await self.db.execute(stmt)
-        ideas = result.scalars().all()
-        return [IdeaModel.model_validate(idea) for idea in ideas]
-
-    async def get_global_ideas_list(self) -> list[IdeaModel]:
-        stmt = select(GiftIdea).where(GiftIdea.deleted_at == None).where(GiftIdea.is_global)
-        result = await self.db.execute(stmt)
-        ideas = result.scalars().all()
-        return [IdeaModel.model_validate(idea) for idea in ideas]
-
-    async def get_idea_by_id(self, idea_id: UUID, user: User) -> IdeaModel:
-        stmt = select(GiftIdea).where(GiftIdea.deleted_at == None).where(GiftIdea.id == idea_id)
-        result = await self.db.execute(stmt)
-        idea = result.scalar_one_or_none()
-
+    async def _get_model(self, idea_id: UUID) -> GiftIdea:
+        idea = await self.repo.get_by_id(idea_id)
         if not idea:
-            raise NotFoundError("idea")
-        if isinstance(user, SimpleUser):
-            if idea.user_id != user.id:
-                raise GiftAppError("forbidden to get idea")
-
-        return IdeaModel.model_validate(idea)
+            raise NotFoundError("Idea")
+        return idea
