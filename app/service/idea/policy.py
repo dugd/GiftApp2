@@ -8,7 +8,7 @@ class IdeaPolicy:
         self.user = user
 
     def _is_admin(self) -> bool:
-        return self.user.role == UserRole.USER
+        return self.user.role in {UserRole.ADMIN, UserRole.ROOT}
 
     @staticmethod
     def _is_global(idea: IdeaModel) -> bool:

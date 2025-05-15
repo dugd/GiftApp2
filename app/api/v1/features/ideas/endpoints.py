@@ -6,7 +6,8 @@ from fastapi import APIRouter, status, Depends
 from app.schemas.idea import IdeaCreate, IdeaModel, IdeaUpdateInfo
 from app.service.idea import IdeaService
 from app.api.v1.dependencies import CurrentUserDepends
-from .dependencies import get_idea_service
+from app.api.v1.pagination import PaginationParams
+from .dependencies import get_idea_service, IdeaFilterParams, IdeaSortingParams
 
 router = APIRouter(prefix="/ideas", tags=["ideas"])
 
@@ -23,19 +24,36 @@ async def create(
 @router.get("/my", response_model=List[IdeaModel])
 async def index_my(
         user: CurrentUserDepends,
-        archived: bool = False,
+        pagination: PaginationParams = Depends(),
+        sorting: IdeaSortingParams = Depends(),
+        filters: IdeaFilterParams = Depends(),
         idea_service: IdeaService = Depends(get_idea_service),
 ):
-    return await idea_service.get_user_ideas(user.id)
+    return await idea_service.get_user_ideas(
+        user,
+        pagination.limit,
+        pagination.offset,
+        sorting.order_by,
+        sorting.desc,
+        filters.to_filters()
+    )
 
 
 @router.get("/global", response_model=List[IdeaModel])
 async def index_global(
         user: CurrentUserDepends,
-        archived: bool = False,
+        pagination: PaginationParams = Depends(),
+        sorting: IdeaSortingParams = Depends(),
+        filters: IdeaFilterParams = Depends(),
         idea_service: IdeaService = Depends(get_idea_service),
 ):
-    return await idea_service.get_global_ideas()
+    return await idea_service.get_global_ideas(
+        pagination.limit,
+        pagination.offset,
+        sorting.order_by,
+        sorting.desc,
+        filters.to_filters()
+    )
 
 
 @router.get("/{idea_id}", response_model=List[IdeaModel])

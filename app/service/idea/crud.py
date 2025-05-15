@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import Sequence
+from typing import Sequence, Optional
 
 from app.repositories.orm import IdeaRepository
 from app.schemas.idea import IdeaCreate, IdeaUpdateInfo, IdeaModel
@@ -35,7 +35,7 @@ class IdeaService:
 
     async def create(self, user: UserModel, data: IdeaCreate) -> IdeaModel:
         self._check_permission(user, "create", is_global=data.is_global)
-        idea = GiftIdea(**data.model_dump(), user_id=user.id)
+        idea = GiftIdea(**data.model_dump(mode="json"), user_id=user.id)
         await self.repo.add(idea)
         return IdeaModel.model_validate(idea)
 
@@ -58,12 +58,41 @@ class IdeaService:
         updated = await self.repo.update(idea, {})
         return IdeaModel.model_validate(updated)
 
-    async def get_user_ideas(self, user: UserModel) -> Sequence[IdeaModel]:
-        ideas = await self.repo.get_by_user_id(user.id)
+    async def get_user_ideas(
+            self,
+            user: UserModel,
+            limit: int = 20,
+            offset: int = 0,
+            order_by: Optional[str] = None,
+            desc_order: bool = False,
+            filters: dict = None
+    ) -> Sequence[IdeaModel]:
+        ideas = await self.repo.get_by_user_id(
+            user.id,
+            offset,
+            limit,
+            order_by,
+            desc_order,
+            **filters,
+        )
         return [IdeaModel.model_validate(i) for i in ideas]
 
-    async def get_global_ideas(self) -> Sequence[IdeaModel]:
-        ideas = await self.repo.list(is_global=True)
+    async def get_global_ideas(
+            self,
+            limit: int = 20,
+            offset: int = 0,
+            order_by: Optional[str] = None,
+            desc_order: bool = False,
+            filters: dict = None
+    ) -> Sequence[IdeaModel]:
+        ideas = await self.repo.list(
+            offset,
+            limit,
+            order_by,
+            desc_order,
+            is_global=True,
+            **filters,
+        )
         return [IdeaModel.model_validate(i) for i in ideas]
 
     async def get_one(self, user: UserModel, idea_id: UUID) -> IdeaModel:
